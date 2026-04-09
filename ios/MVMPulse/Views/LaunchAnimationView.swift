@@ -46,10 +46,9 @@ struct LaunchAnimationView: View {
     @State private var shockwaveScale: Double = 0.01
     @State private var shockwaveOpacity: Double = 0
 
-    @State private var ctaOpacity: Double = 0
-    @State private var ctaOffset: Double = 30
-    @State private var showCTA: Bool = false
-    @State private var ctaPulse: Bool = false
+    @State private var exitProgress: Double = 0
+    @State private var exitBlur: Double = 0
+    @State private var exitScale: Double = 1.0
 
     @State private var horizontalLineProgress: Double = 0
     @State private var horizontalLineOpacity: Double = 0
@@ -86,11 +85,10 @@ struct LaunchAnimationView: View {
                     .padding(.top, 28)
 
                 Spacer()
-
-                enterButton
-                    .padding(.bottom, 60)
             }
             .opacity(contentOpacity)
+            .scaleEffect(exitScale)
+            .blur(radius: exitBlur)
 
             Color.white
                 .ignoresSafeArea()
@@ -363,39 +361,7 @@ struct LaunchAnimationView: View {
             .blur(radius: taglineBlur)
     }
 
-    private var enterButton: some View {
-        Group {
-            if showCTA {
-                Button {
-                    dismissWithFlash()
-                } label: {
-                    HStack(spacing: 8) {
-                        Text("ENTER")
-                            .font(.system(size: 15, weight: .bold))
-                            .tracking(4)
 
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 13, weight: .bold))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 36)
-                    .padding(.vertical, 16)
-                    .background(
-                        Capsule()
-                            .fill(PulseTheme.primaryTeal.opacity(0.25))
-                            .overlay(
-                                Capsule()
-                                    .stroke(PulseTheme.primaryTeal.opacity(0.6), lineWidth: 1)
-                            )
-                    )
-                    .scaleEffect(ctaPulse ? 1.03 : 1.0)
-                }
-                .opacity(ctaOpacity)
-                .offset(y: ctaOffset)
-                .sensoryFeedback(.impact(weight: .heavy), trigger: showCTA)
-            }
-        }
-    }
 
     private func generateParticles() {
         let screenW: CGFloat = UIScreen.main.bounds.width
@@ -525,16 +491,9 @@ struct LaunchAnimationView: View {
             vignetteDarken = 0.3
         }
 
-        // === PHASE 10: CTA button appears (8.5s) ===
-        DispatchQueue.main.asyncAfter(deadline: .now() + 8.8) {
-            showCTA = true
-            withAnimation(.spring(response: 0.7, dampingFraction: 0.7)) {
-                ctaOpacity = 1
-                ctaOffset = 0
-            }
-            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true).delay(0.5)) {
-                ctaPulse = true
-            }
+        // === PHASE 10: Hold for a beat, then gradual exit (9.5s) ===
+        DispatchQueue.main.asyncAfter(deadline: .now() + 9.5) {
+            beginGradualExit()
         }
     }
 
@@ -603,17 +562,29 @@ struct LaunchAnimationView: View {
         }
     }
 
-    private func dismissWithFlash() {
-        withAnimation(.easeIn(duration: 0.12)) {
-            flashOpacity = 0.7
+    private func beginGradualExit() {
+        withAnimation(.easeInOut(duration: 1.2)) {
+            exitScale = 1.08
+            meshGlow = 1.5
         }
-        withAnimation(.easeIn(duration: 0.25)) {
+
+        withAnimation(.easeIn(duration: 1.8).delay(0.6)) {
+            exitBlur = 16
             contentOpacity = 0
         }
-        withAnimation(.easeOut(duration: 0.35).delay(0.12)) {
+
+        withAnimation(.easeIn(duration: 1.4).delay(0.8)) {
+            vignetteDarken = 1.0
+        }
+
+        withAnimation(.easeIn(duration: 0.15).delay(1.8)) {
+            flashOpacity = 0.5
+        }
+        withAnimation(.easeOut(duration: 0.5).delay(1.95)) {
             flashOpacity = 0
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.3) {
             timelineActive = false
             onFinished()
         }
