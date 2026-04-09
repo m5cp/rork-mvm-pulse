@@ -1,0 +1,10 @@
+{
+  "$schema": "https://rork.com/schema/rork.json",
+  "apps": [
+    {
+      "name": "MVM Pulse",
+      "path": "ios",
+      "framework": "swift"
+    }
+  ]
+}
