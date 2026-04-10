@@ -24,6 +24,21 @@ struct OnboardingView: View {
             default: EmptyView()
             }
         }
+        .overlay(alignment: .topTrailing) {
+            if currentPage < 2 {
+                Button {
+                    skipOnboarding()
+                } label: {
+                    Text("Skip")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                }
+                .padding(.top, 12)
+                .padding(.trailing, 8)
+            }
+        }
         .animation(reduceMotion ? .none : .smooth(duration: 0.4), value: currentPage)
     }
 
@@ -285,6 +300,11 @@ struct OnboardingView: View {
             .padding(.bottom, 40)
         }
         .scrollDismissesKeyboard(.interactively)
+    }
+
+    private func skipOnboarding() {
+        storage.userProfile.hasCompletedOnboarding = true
+        onComplete()
     }
 
     private func completeOnboarding() {
