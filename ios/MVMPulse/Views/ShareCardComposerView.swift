@@ -1,9 +1,13 @@
 import SwiftUI
+import Photos
 
 struct ShareCardComposerView: View {
     let result: AssessmentResult
     let storage: StorageService
     @State private var selectedStyle: ShareCardStyle = .dark
+    @State private var showingSaveSuccess: Bool = false
+    @State private var showingSaveError: Bool = false
+    @State private var saveErrorMessage: String = ""
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -24,9 +28,7 @@ struct ShareCardComposerView: View {
             }
 
             VStack(spacing: 12) {
-                Button {
-                    shareCard()
-                } label: {
+                ShareLink(item: renderedImage, preview: SharePreview("MVM Pulse Score", image: renderedImage)) {
                     Label("Share", systemImage: "square.and.arrow.up")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
@@ -56,6 +58,16 @@ struct ShareCardComposerView: View {
                 Button("Done") { dismiss() }
             }
         }
+        .alert("Saved!", isPresented: $showingSaveSuccess) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your Pulse Score card has been saved to Photos.")
+        }
+        .alert("Unable to Save", isPresented: $showingSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(saveErrorMessage)
+        }
     }
 
     @MainActor
@@ -67,7 +79,19 @@ struct ShareCardComposerView: View {
     }
 
     @MainActor
-    private func renderImage() -> UIImage? {
+    private var renderedImage: Image {
+        let cardView = ShareCardView(result: result, style: selectedStyle, strongestCategory: result.strongestCategory?.category.rawValue ?? "")
+            .frame(width: 390, height: 400)
+        let renderer = ImageRenderer(content: cardView)
+        renderer.scale = 3.0
+        if let uiImage = renderer.uiImage {
+            return Image(uiImage: uiImage)
+        }
+        return Image(systemName: "photo")
+    }
+
+    @MainActor
+    private func renderUIImage() -> UIImage? {
         let cardView = ShareCardView(result: result, style: selectedStyle, strongestCategory: result.strongestCategory?.category.rawValue ?? "")
             .frame(width: 390, height: 400)
         let renderer = ImageRenderer(content: cardView)
@@ -75,18 +99,35 @@ struct ShareCardComposerView: View {
         return renderer.uiImage
     }
 
-    private func shareCard() {
-        guard let image = renderImage() else { return }
-        let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(activityVC, animated: true)
-        }
-    }
-
     private func saveCard() {
-        guard let image = renderImage() else { return }
-        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        guard let image = renderUIImage() else { return }
+
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            Task { @MainActor in
+                switch status {
+                case .authorized, .limited:
+                    PHPhotoLibrary.shared().performChanges {
+                        let request = PHAssetChangeRequest.creationRequestForAsset(from: image)
+                        request.creationDate = Date()
+                    } completionHandler: { success, error in
+                        Task { @MainActor in
+                            if success {
+                                showingSaveSuccess = true
+                            } else {
+                                saveErrorMessage = error?.localizedDescription ?? "Could not save image."
+                                showingSaveError = true
+                            }
+                        }
+                    }
+                case .denied, .restricted:
+                    saveErrorMessage = "Please allow photo access in Settings to save your score card."
+                    showingSaveError = true
+                default:
+                    saveErrorMessage = "Photo library access is required to save images."
+                    showingSaveError = true
+                }
+            }
+        }
     }
 }
 
