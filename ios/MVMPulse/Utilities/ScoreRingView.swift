@@ -74,6 +74,15 @@ struct ScoreRingView: View {
             }
             animateIn()
         }
+        .onChange(of: animated) { _, newValue in
+            guard newValue else { return }
+            if reduceMotion {
+                animatedProgress = progress
+                displayedScore = Int(score)
+                return
+            }
+            animateIn()
+        }
     }
 
     private func animateIn() {

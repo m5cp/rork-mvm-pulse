@@ -395,15 +395,15 @@ struct SettingsView: View {
 
     private var supportSection: some View {
         Section("Support") {
-            if let url = URL(string: "mailto:m5cp@proton.me") {
+            if let url = URL(string: "mailto:contact@m5cairo.com") {
                 Link(destination: url) {
                     HStack {
                         Label("Contact Support", systemImage: "envelope")
                             .foregroundStyle(.primary)
                         Spacer()
-                        Text("m5cp@proton.me")
+                        Image(systemName: "chevron.right")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.tertiary)
                     }
                 }
             }
@@ -535,13 +535,13 @@ enum LegalPage: String, CaseIterable, Identifiable, Sendable {
     var content: String {
         switch self {
         case .privacy:
-            return "MVM Pulse stores all data exclusively on your device. No personal information is collected, transmitted, or shared with any third party. Assessment responses, scores, roadmap progress, and history never leave your device. Premium purchases are processed securely by Apple. We do not use analytics, advertising, or tracking SDKs of any kind.\n\nContact: m5cp@proton.me"
+            return "MVM Pulse stores all data exclusively on your device. No personal information is collected, transmitted, or shared with any third party. Assessment responses, scores, roadmap progress, and history never leave your device. Premium purchases are processed securely by Apple. We do not use analytics, advertising, or tracking SDKs of any kind.\n\nContact: contact@m5cairo.com"
         case .terms:
             return "MVM Pulse is a self-assessment and personal development tool provided for informational purposes only. It does not constitute financial advice, medical advice, legal advice, business consulting, or any other form of professional guidance. Scores and recommendations are algorithmically generated based on self-reported information and general benchmarks. Individual results will vary. Consult qualified professionals for specific advice.\n\nThis app is licensed under Apple's Standard EULA. M5 Capital Partners LLC reserves all intellectual property rights."
         case .disclaimer:
             return "MVM Pulse is not a substitute for professional financial planning, business consulting, medical care, therapy, or any licensed professional service. All scores, insights, roadmaps, and recommendations are estimates based on your self-reported answers and general industry research. Every individual and business situation is different.\n\nM5 Capital Partners LLC (M5CAIRO) makes no guarantees regarding specific outcomes from using this app. Use at your own discretion."
         case .accessibility:
-            return "MVM Pulse supports VoiceOver with descriptive labels on interactive elements, Dynamic Type for text scaling, full Dark Mode, Reduce Motion preference, and minimum 44x44 point touch targets.\n\nContact m5cp@proton.me with accessibility feedback."
+            return "MVM Pulse supports VoiceOver with descriptive labels on interactive elements, Dynamic Type for text scaling, full Dark Mode, Reduce Motion preference, and minimum 44x44 point touch targets.\n\nContact contact@m5cairo.com with accessibility feedback."
         case .eula:
             return "This app is licensed under Apple's Standard End User License Agreement (EULA).\n\nhttps://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
         }
