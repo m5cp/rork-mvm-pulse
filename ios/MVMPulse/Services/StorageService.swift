@@ -12,7 +12,6 @@ final class StorageService {
         static let streakData = "mvmpulse_streak_data"
         static let appearanceMode = "mvmpulse_appearance_mode"
         static let notificationsEnabled = "mvmpulse_notifications_enabled"
-        static let isPremium = "mvmpulse_is_premium"
         static let dailyCheckIns = "mvmpulse_daily_checkins"
         static let goalData = "mvmpulse_goal_data"
         static let morningReminderHour = "mvmpulse_morning_reminder_hour"
@@ -46,10 +45,6 @@ final class StorageService {
             defaults.set(notificationsEnabled, forKey: Keys.notificationsEnabled)
             NotificationService.shared.updateNotifications(enabled: notificationsEnabled)
         }
-    }
-
-    var isPremium: Bool {
-        didSet { defaults.set(isPremium, forKey: Keys.isPremium) }
     }
 
     var dailyCheckIns: [DailyCheckIn] {
@@ -96,7 +91,6 @@ final class StorageService {
         self.streakData = Self.load(StreakData.self, forKey: Keys.streakData) ?? StreakData()
         self.appearanceMode = Self.load(AppearanceMode.self, forKey: Keys.appearanceMode) ?? .system
         self.notificationsEnabled = UserDefaults.standard.bool(forKey: Keys.notificationsEnabled)
-        self.isPremium = true
         self.dailyCheckIns = Self.load([DailyCheckIn].self, forKey: Keys.dailyCheckIns) ?? []
         self.goalData = Self.load(GoalData.self, forKey: Keys.goalData)
         self.morningReminderHour = UserDefaults.standard.object(forKey: Keys.morningReminderHour) as? Int ?? 9

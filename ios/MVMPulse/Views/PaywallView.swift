@@ -1,35 +1,17 @@
 import SwiftUI
+import RevenueCat
 
 struct PaywallView: View {
-    let storage: StorageService
-    @State private var selectedPlan: PremiumPlan = .annual
-    @State private var isRestoring: Bool = false
-    @State private var isPurchasing: Bool = false
+    var store: StoreViewModel
+    @State private var selectedPackageId: String?
     @Environment(\.dismiss) private var dismiss
 
-    enum PremiumPlan {
-        case monthly, annual
+    private var packages: [Package] {
+        store.offerings?.current?.availablePackages ?? []
+    }
 
-        var title: String {
-            switch self {
-            case .monthly: "Monthly"
-            case .annual: "Annual"
-            }
-        }
-
-        var price: String {
-            switch self {
-            case .monthly: "$9.99/mo"
-            case .annual: "$79.99/yr"
-            }
-        }
-
-        var subtitle: String {
-            switch self {
-            case .monthly: "Cancel anytime"
-            case .annual: "7-day free trial · Save 33%"
-            }
-        }
+    private var selectedPackage: Package? {
+        packages.first(where: { $0.identifier == selectedPackageId })
     }
 
     var body: some View {
@@ -37,9 +19,18 @@ struct PaywallView: View {
             VStack(spacing: 28) {
                 headerSection
                 comparisonTable
-                planSelector
-                purchaseButton
-                restoreButton
+                if store.isLoading {
+                    ProgressView()
+                        .padding(.vertical, 20)
+                } else if !packages.isEmpty {
+                    planSelector
+                    purchaseButton
+                    restoreButton
+                } else {
+                    ContentUnavailableView("Unable to Load Plans", systemImage: "exclamationmark.triangle", description: Text("Please check your connection and try again."))
+                        .padding(.vertical, 20)
+                }
+                legalLinks
                 legalText
             }
             .padding(.horizontal, 20)
@@ -51,6 +42,24 @@ struct PaywallView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Close") { dismiss() }
                     .foregroundStyle(.secondary)
+            }
+        }
+        .alert("Error", isPresented: .init(
+            get: { store.error != nil },
+            set: { if !$0 { store.error = nil } }
+        )) {
+            Button("OK") { store.error = nil }
+        } message: {
+            Text(store.error ?? "")
+        }
+        .onChange(of: store.isPremium) { _, isPremium in
+            if isPremium { dismiss() }
+        }
+        .onAppear {
+            if selectedPackageId == nil, let annual = packages.first(where: { $0.packageType == .annual }) {
+                selectedPackageId = annual.identifier
+            } else if selectedPackageId == nil, let first = packages.first {
+                selectedPackageId = first.identifier
             }
         }
     }
@@ -139,69 +148,77 @@ struct PaywallView: View {
 
     private var planSelector: some View {
         VStack(spacing: 10) {
-            planButton(plan: .annual, recommended: true)
-            planButton(plan: .monthly, recommended: false)
-        }
-    }
+            ForEach(packages, id: \.identifier) { package in
+                let isSelected = selectedPackageId == package.identifier
+                let isAnnual = package.packageType == .annual
 
-    private func planButton(plan: PremiumPlan, recommended: Bool) -> some View {
-        Button {
-            selectedPlan = plan
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(plan.title)
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.primary)
+                Button {
+                    selectedPackageId = package.identifier
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 6) {
+                                Text(package.storeProduct.localizedTitle)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.primary)
 
-                        if recommended {
-                            Text("BEST VALUE")
-                                .font(.system(size: 9, weight: .heavy))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(PulseTheme.primaryTeal)
-                                .clipShape(Capsule())
+                                if isAnnual {
+                                    Text("BEST VALUE")
+                                        .font(.system(size: 9, weight: .heavy))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(PulseTheme.primaryTeal)
+                                        .clipShape(Capsule())
+                                }
+                            }
+
+                            if let intro = package.storeProduct.introductoryDiscount {
+                                Text("\(intro.subscriptionPeriod.value)-\(unitLabel(intro.subscriptionPeriod.unit)) free trial")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text(package.storeProduct.localizedDescription)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
                         }
+
+                        Spacer()
+
+                        Text(package.storeProduct.localizedPriceString)
+                            .font(.subheadline.bold())
+                            .foregroundStyle(isSelected ? PulseTheme.primaryTeal : .primary)
                     }
-
-                    Text(plan.subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .padding(16)
+                    .background(
+                        isSelected
+                            ? PulseTheme.primaryTeal.opacity(0.08)
+                            : Color(.secondarySystemGroupedBackground)
+                    )
+                    .clipShape(.rect(cornerRadius: 14))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .strokeBorder(isSelected ? PulseTheme.primaryTeal : .clear, lineWidth: 1.5)
+                    )
                 }
-
-                Spacer()
-
-                Text(plan.price)
-                    .font(.subheadline.bold())
-                    .foregroundStyle(selectedPlan == plan ? PulseTheme.primaryTeal : .primary)
+                .buttonStyle(.plain)
             }
-            .padding(16)
-            .background(
-                selectedPlan == plan
-                    ? PulseTheme.primaryTeal.opacity(0.08)
-                    : Color(.secondarySystemGroupedBackground)
-            )
-            .clipShape(.rect(cornerRadius: 14))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .strokeBorder(selectedPlan == plan ? PulseTheme.primaryTeal : .clear, lineWidth: 1.5)
-            )
         }
-        .buttonStyle(.plain)
     }
 
     private var purchaseButton: some View {
         Button {
-            purchase()
+            guard let pkg = selectedPackage else { return }
+            Task { await store.purchase(package: pkg) }
         } label: {
             Group {
-                if isPurchasing {
+                if store.isPurchasing {
                     ProgressView()
                         .tint(.white)
                 } else {
-                    Text(selectedPlan == .annual ? "Start Free Trial" : "Subscribe Now")
+                    Text(purchaseButtonTitle)
                         .font(.headline)
                 }
             }
@@ -210,22 +227,56 @@ struct PaywallView: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(PulseTheme.primaryTeal)
-        .disabled(isPurchasing || isRestoring)
+        .disabled(store.isPurchasing || selectedPackage == nil)
+    }
+
+    private var purchaseButtonTitle: String {
+        guard let pkg = selectedPackage else { return "Subscribe Now" }
+        if pkg.storeProduct.introductoryDiscount != nil {
+            return "Start Free Trial"
+        }
+        return "Subscribe Now"
     }
 
     private var restoreButton: some View {
         Button {
-            restore()
+            Task { await store.restore() }
         } label: {
-            if isRestoring {
-                ProgressView()
-            } else {
-                Text("Restore Purchases")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            Text("Restore Purchases")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .disabled(store.isPurchasing)
+    }
+
+    private var legalLinks: some View {
+        HStack(spacing: 16) {
+            if let privacyURL = URL(string: "https://m5cairo.com/privacy") {
+                Link("Privacy Policy", destination: privacyURL)
+                    .font(.caption)
+                    .foregroundStyle(PulseTheme.primaryTeal)
+            }
+
+            Text("\u{00B7}")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
+            if let termsURL = URL(string: "https://m5cairo.com/terms") {
+                Link("Terms of Use", destination: termsURL)
+                    .font(.caption)
+                    .foregroundStyle(PulseTheme.primaryTeal)
+            }
+
+            Text("\u{00B7}")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
+            if let eulaURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/") {
+                Link("EULA", destination: eulaURL)
+                    .font(.caption)
+                    .foregroundStyle(PulseTheme.primaryTeal)
             }
         }
-        .disabled(isPurchasing || isRestoring)
     }
 
     private var legalText: some View {
@@ -235,21 +286,13 @@ struct PaywallView: View {
             .multilineTextAlignment(.center)
     }
 
-    private func purchase() {
-        isPurchasing = true
-        Task {
-            try? await Task.sleep(for: .seconds(1))
-            storage.isPremium = true
-            isPurchasing = false
-            dismiss()
-        }
-    }
-
-    private func restore() {
-        isRestoring = true
-        Task {
-            try? await Task.sleep(for: .seconds(1))
-            isRestoring = false
+    private func unitLabel(_ unit: SubscriptionPeriod.Unit) -> String {
+        switch unit {
+        case .day: return "day"
+        case .week: return "week"
+        case .month: return "month"
+        case .year: return "year"
+        @unknown default: return ""
         }
     }
 }

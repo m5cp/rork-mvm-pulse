@@ -3,6 +3,7 @@ import SwiftUI
 struct ResultsView: View {
     let result: AssessmentResult
     let storage: StorageService
+    let store: StoreViewModel
     @State private var showShareComposer: Bool = false
     @State private var showPDFPreview: Bool = false
     @State private var expandedCategory: AssessmentCategory?
@@ -231,7 +232,7 @@ struct ResultsView: View {
                 CategoryResultCard(
                     categoryScore: cs,
                     isExpanded: expandedCategory == cs.category,
-                    isPremium: storage.isPremium
+                    isPremium: store.isPremium
                 ) {
                     withAnimation(.snappy) {
                         expandedCategory = expandedCategory == cs.category ? nil : cs.category
@@ -244,7 +245,7 @@ struct ResultsView: View {
 
     private var actionButtons: some View {
         VStack(spacing: 12) {
-            if storage.isPremium {
+            if store.isPremium {
                 Button {
                     showPDFPreview = true
                 } label: {

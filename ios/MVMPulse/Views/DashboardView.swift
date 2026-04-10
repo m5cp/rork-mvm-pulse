@@ -3,6 +3,7 @@ import Charts
 
 struct DashboardView: View {
     let storage: StorageService
+    let store: StoreViewModel
     @Binding var selectedTab: AppTab
     @State private var showAssessment: Bool = false
     @State private var showDeepDive: Bool = false
@@ -43,12 +44,12 @@ struct DashboardView: View {
                 .navigationTitle(greeting)
                 .fullScreenCover(isPresented: $showAssessment) {
                     NavigationStack {
-                        AssessmentFlowContainer(storage: storage, selectedTab: $selectedTab, mode: .quick)
+                        AssessmentFlowContainer(storage: storage, store: store, selectedTab: $selectedTab, mode: .quick)
                     }
                 }
                 .fullScreenCover(isPresented: $showDeepDive) {
                     NavigationStack {
-                        AssessmentFlowContainer(storage: storage, selectedTab: $selectedTab, mode: .deepDive)
+                        AssessmentFlowContainer(storage: storage, store: store, selectedTab: $selectedTab, mode: .deepDive)
                     }
                 }
                 .sheet(item: $showMilestone) { milestone in
@@ -61,12 +62,12 @@ struct DashboardView: View {
                 }
                 .sheet(isPresented: $showAssessmentHistory) {
                     NavigationStack {
-                        AssessmentHistoryView(storage: storage)
+                        AssessmentHistoryView(storage: storage, store: store)
                     }
                 }
                 .sheet(item: $selectedCategory) { category in
                     NavigationStack {
-                        CategoryDeepDiveView(category: category, storage: storage)
+                        CategoryDeepDiveView(category: category, storage: storage, store: store)
                     }
                 }
                 .sensoryFeedback(.success, trigger: taskCompletionHaptic)
@@ -201,12 +202,12 @@ struct DashboardView: View {
                         .staggerIn(appeared: cardsAppeared, index: 8, reduceMotion: reduceMotion)
                 }
 
-                if let task = storage.roadmap.todaysTask, storage.isPremium {
+                if let task = storage.roadmap.todaysTask, store.isPremium {
                     todaysTaskCard(task: task)
                         .staggerIn(appeared: cardsAppeared, index: 9, reduceMotion: reduceMotion)
                 }
 
-                if storage.isPremium {
+                if store.isPremium {
                     streakCard
                         .staggerIn(appeared: cardsAppeared, index: 10, reduceMotion: reduceMotion)
                 }
@@ -216,12 +217,12 @@ struct DashboardView: View {
                         .staggerIn(appeared: cardsAppeared, index: 11, reduceMotion: reduceMotion)
                 }
 
-                if storage.isPremium, let result = storage.latestResult {
+                if store.isPremium, let result = storage.latestResult {
                     insightsSection(result: result)
                         .staggerIn(appeared: cardsAppeared, index: 12, reduceMotion: reduceMotion)
                 }
 
-                if !storage.isPremium {
+                if !store.isPremium {
                     premiumPromptCard
                         .staggerIn(appeared: cardsAppeared, index: 12, reduceMotion: reduceMotion)
                 }
@@ -860,7 +861,7 @@ struct DashboardView: View {
         .buttonStyle(.plain)
         .sheet(isPresented: $showPaywall) {
             NavigationStack {
-                PaywallView(storage: storage)
+                PaywallView(store: store)
             }
         }
     }
@@ -934,6 +935,7 @@ struct DashboardView: View {
 
 struct AssessmentFlowContainer: View {
     let storage: StorageService
+    let store: StoreViewModel
     @Binding var selectedTab: AppTab
     let mode: AssessmentMode
     @State private var phase: AssessmentFlowPhase = .questions
@@ -1011,7 +1013,7 @@ struct AssessmentFlowContainer: View {
             }
         case .results:
             if let result {
-                ResultsView(result: result, storage: storage)
+                ResultsView(result: result, storage: storage, store: store)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button("Done") { dismiss() }

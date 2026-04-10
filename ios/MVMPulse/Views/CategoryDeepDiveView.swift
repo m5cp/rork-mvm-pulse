@@ -4,6 +4,7 @@ import Charts
 struct CategoryDeepDiveView: View {
     let category: AssessmentCategory
     let storage: StorageService
+    let store: StoreViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var appeared: Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -49,12 +50,12 @@ struct CategoryDeepDiveView: View {
                 benchmarkCard
                     .staggerIn(appeared: appeared, index: 2, reduceMotion: reduceMotion)
 
-                if storage.isPremium {
+                if store.isPremium {
                     analysisCard
                         .staggerIn(appeared: appeared, index: 3, reduceMotion: reduceMotion)
                 }
 
-                if !relatedTasks.isEmpty && storage.isPremium {
+                if !relatedTasks.isEmpty && store.isPremium {
                     tasksCard
                         .staggerIn(appeared: appeared, index: 4, reduceMotion: reduceMotion)
                 }

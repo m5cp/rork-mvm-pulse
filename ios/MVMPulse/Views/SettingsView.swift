@@ -3,6 +3,7 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     let storage: StorageService
+    let store: StoreViewModel
     @State private var showResetConfirmation: Bool = false
     @State private var showPaywall: Bool = false
     @State private var showLegal: LegalPage?
@@ -47,7 +48,7 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showPaywall) {
                 NavigationStack {
-                    PaywallView(storage: storage)
+                    PaywallView(store: store)
                 }
             }
             .sheet(item: $showLegal) { page in
@@ -57,7 +58,7 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showAssessmentHistory) {
                 NavigationStack {
-                    AssessmentHistoryView(storage: storage)
+                    AssessmentHistoryView(storage: storage, store: store)
                 }
             }
             .sheet(isPresented: $showGoalSetting) {
@@ -315,7 +316,7 @@ struct SettingsView: View {
 
     private var subscriptionSection: some View {
         Section("Subscription") {
-            if storage.isPremium {
+            if store.isPremium {
                 HStack {
                     Label("Premium", systemImage: "crown.fill")
                         .foregroundStyle(.orange)
@@ -535,7 +536,7 @@ enum LegalPage: String, CaseIterable, Identifiable, Sendable {
     var content: String {
         switch self {
         case .privacy:
-            return "MVM Pulse stores all data exclusively on your device. No personal information is collected, transmitted, or shared with any third party. Assessment responses, scores, roadmap progress, and history never leave your device. Premium purchases are processed securely by Apple. We do not use analytics, advertising, or tracking SDKs of any kind.\n\nContact: contact@m5cairo.com"
+            return "MVM Pulse stores all data exclusively on your device. Your assessment responses, scores, roadmap progress, and history never leave your device.\n\nEmail Collection: If you optionally provide your email address during the results flow, it is stored locally on your device for contact purposes only. It is not transmitted to any server, shared with third parties, or used for marketing.\n\nPremium purchases are processed securely by Apple through the App Store. We do not have access to your payment information.\n\nWe do not use analytics, advertising, or tracking SDKs of any kind. No personal data is collected, transmitted, or shared with any third party.\n\nFor questions about your privacy, contact: contact@m5cairo.com"
         case .terms:
             return "MVM Pulse is a self-assessment and personal development tool provided for informational purposes only. It does not constitute financial advice, medical advice, legal advice, business consulting, or any other form of professional guidance. Scores and recommendations are algorithmically generated based on self-reported information and general benchmarks. Individual results will vary. Consult qualified professionals for specific advice.\n\nThis app is licensed under Apple's Standard EULA. M5 Capital Partners LLC reserves all intellectual property rights."
         case .disclaimer:

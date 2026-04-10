@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RoadmapView: View {
     let storage: StorageService
+    let store: StoreViewModel
     @State private var showPaywall: Bool = false
     @State private var celebratingWeek: Int?
     @State private var showCelebration: Bool = false
@@ -12,7 +13,7 @@ struct RoadmapView: View {
         NavigationStack {
             ZStack {
                 Group {
-                    if storage.roadmap.weeks.isEmpty || !storage.isPremium {
+                    if storage.roadmap.weeks.isEmpty || !store.isPremium {
                         lockedState
                     } else {
                         roadmapContent
@@ -21,7 +22,7 @@ struct RoadmapView: View {
                 .navigationTitle("Roadmap")
                 .sheet(isPresented: $showPaywall) {
                     NavigationStack {
-                        PaywallView(storage: storage)
+                        PaywallView(store: store)
                     }
                 }
                 .fullScreenCover(isPresented: $showCelebration) {
@@ -69,7 +70,7 @@ struct RoadmapView: View {
                     }
                 }
 
-                if storage.hasCompletedAssessment && !storage.isPremium {
+                if storage.hasCompletedAssessment && !store.isPremium {
                     Button {
                         showPaywall = true
                     } label: {
@@ -82,7 +83,7 @@ struct RoadmapView: View {
                     .tint(PulseTheme.primaryTeal)
                 }
 
-                if storage.hasCompletedAssessment && !storage.isPremium {
+                if storage.hasCompletedAssessment && !store.isPremium {
                     roadmapTeaser
                 }
 
