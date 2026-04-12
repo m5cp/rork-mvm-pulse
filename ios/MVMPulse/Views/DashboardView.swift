@@ -18,6 +18,7 @@ struct DashboardView: View {
     @State private var showGoalSetting: Bool = false
     @State private var showAssessmentHistory: Bool = false
     @State private var showExecutiveBriefing: Bool = false
+    @State private var showTeamAssessment: Bool = false
     @State private var selectedCategory: AssessmentCategory?
     @State private var taskCompletionHaptic: Int = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -70,6 +71,11 @@ struct DashboardView: View {
                 .sheet(isPresented: $showExecutiveBriefing) {
                     NavigationStack {
                         ExecutiveBriefingView(storage: storage, ai: ai)
+                    }
+                }
+                .sheet(isPresented: $showTeamAssessment) {
+                    NavigationStack {
+                        TeamAssessmentView(storage: storage, store: store)
                     }
                 }
                 .sheet(item: $selectedCategory) { category in
@@ -230,6 +236,9 @@ struct DashboardView: View {
 
                     executiveBriefingCard
                         .staggerIn(appeared: cardsAppeared, index: 13, reduceMotion: reduceMotion)
+
+                    teamAssessmentCard
+                        .staggerIn(appeared: cardsAppeared, index: 14, reduceMotion: reduceMotion)
                 }
 
                 if !store.isPremium {
@@ -274,6 +283,11 @@ struct DashboardView: View {
                             showExecutiveBriefing = true
                         } label: {
                             Label("Executive Briefing", systemImage: "chart.line.uptrend.xyaxis")
+                        }
+                        Button {
+                            showTeamAssessment = true
+                        } label: {
+                            Label("Team Assessment", systemImage: "person.3.fill")
                         }
                     }
                 } label: {
@@ -890,15 +904,15 @@ struct DashboardView: View {
             showPaywall = true
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: "crown.fill")
+                Image(systemName: "building.2.fill")
                     .font(.title3)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(PulseTheme.primaryTeal)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Unlock your full diagnostic")
+                    Text("Upgrade to Business")
                         .font(.subheadline.bold())
                         .foregroundStyle(.primary)
-                    Text("Get detailed analysis, roadmap, and PDF reports")
+                    Text("Team assessments, AI coach, benchmarks & executive briefings")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -942,6 +956,48 @@ struct DashboardView: View {
                     Text("McKinsey-style quarterly trajectory report")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(.rect(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var teamAssessmentCard: some View {
+        Button {
+            showTeamAssessment = true
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.1))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "person.3.fill")
+                        .font(.body)
+                        .foregroundStyle(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Team Assessment")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    if let data = storage.teamData, !data.members.isEmpty {
+                        Text("\(data.completedMembers.count)/\(data.members.count) completed \u{00B7} View alignment gaps")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Invite up to 5 team members to compare scores")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Spacer()

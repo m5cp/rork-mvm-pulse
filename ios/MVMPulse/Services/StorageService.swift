@@ -18,6 +18,7 @@ final class StorageService {
         static let morningReminderMinute = "mvmpulse_morning_reminder_minute"
         static let eveningReminderHour = "mvmpulse_evening_reminder_hour"
         static let eveningReminderMinute = "mvmpulse_evening_reminder_minute"
+        static let teamData = "mvmpulse_team_data"
     }
 
     var userProfile: UserProfile {
@@ -53,6 +54,10 @@ final class StorageService {
 
     var goalData: GoalData? {
         didSet { save(goalData, forKey: Keys.goalData) }
+    }
+
+    var teamData: TeamAssessmentData? {
+        didSet { save(teamData, forKey: Keys.teamData) }
     }
 
     var morningReminderHour: Int {
@@ -93,6 +98,7 @@ final class StorageService {
         self.notificationsEnabled = UserDefaults.standard.bool(forKey: Keys.notificationsEnabled)
         self.dailyCheckIns = Self.load([DailyCheckIn].self, forKey: Keys.dailyCheckIns) ?? []
         self.goalData = Self.load(GoalData.self, forKey: Keys.goalData)
+        self.teamData = Self.load(TeamAssessmentData.self, forKey: Keys.teamData)
         self.morningReminderHour = UserDefaults.standard.object(forKey: Keys.morningReminderHour) as? Int ?? 9
         self.morningReminderMinute = UserDefaults.standard.object(forKey: Keys.morningReminderMinute) as? Int ?? 0
         self.eveningReminderHour = UserDefaults.standard.object(forKey: Keys.eveningReminderHour) as? Int ?? 20
@@ -138,6 +144,7 @@ final class StorageService {
         streakData = StreakData()
         dailyCheckIns = []
         goalData = nil
+        teamData = nil
     }
 
     private func save<T: Encodable>(_ value: T, forKey key: String) {

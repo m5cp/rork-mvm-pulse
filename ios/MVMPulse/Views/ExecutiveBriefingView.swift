@@ -22,12 +22,14 @@ struct ExecutiveBriefingView: View {
             VStack(spacing: 24) {
                 headerSection
                 trajectorySection
+                savingsProjectionSection
                 if let text = briefingText {
                     aiAnalysisSection(text: text)
                 } else if isLoading {
                     loadingSection
                 }
                 benchmarkSummarySection
+                productivityNote
                 consultationCTA
             }
             .padding(.horizontal, 20)
@@ -177,6 +179,87 @@ struct ExecutiveBriefingView: View {
             RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(PulseTheme.primaryTeal.opacity(0.12), lineWidth: 1)
         )
+    }
+
+    private var savingsProjectionSection: some View {
+        Group {
+            if let result = storage.latestResult {
+                let savings = BenchmarkEngine.estimatedAnnualSavings(
+                    industry: storage.userProfile.industry,
+                    companySize: storage.userProfile.companySize,
+                    currentScore: result.overallScore
+                )
+                let hours = BenchmarkEngine.productivityHoursEstimate(
+                    companySize: storage.userProfile.companySize,
+                    currentScore: result.overallScore
+                )
+
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "dollarsign.arrow.circlepath")
+                            .foregroundStyle(.green)
+                        Text("Projected Impact")
+                            .font(.subheadline.bold())
+                    }
+
+                    HStack(spacing: 24) {
+                        VStack(spacing: 4) {
+                            Text("$\(formatBriefingNumber(savings.low))\u{2013}$\(formatBriefingNumber(savings.high))")
+                                .font(.headline.bold())
+                                .foregroundStyle(.green)
+                            Text("Annual Value")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+
+                        VStack(spacing: 4) {
+                            Text("~\(formatBriefingNumber(hours.annualHours)) hrs")
+                                .font(.headline.bold())
+                                .foregroundStyle(PulseTheme.primaryTeal)
+                            Text("Recoverable/yr")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+
+                    Text("Estimated productivity gains from closing your readiness gap. Based on \(storage.userProfile.industry.rawValue) benchmarks for \(storage.userProfile.companySize.rawValue)-person teams.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(16)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(.rect(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(.green.opacity(0.12), lineWidth: 1)
+                )
+            }
+        }
+    }
+
+    private var productivityNote: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "person.fill.checkmark")
+                .font(.subheadline)
+                .foregroundStyle(PulseTheme.primaryTeal)
+
+            Text("All projections focus on productivity enhancement \u{2014} empowering your team to do more, not reducing headcount. AI tools help automate repetitive tasks so your people can focus on higher-value work.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .background(PulseTheme.primaryTeal.opacity(0.04))
+        .clipShape(.rect(cornerRadius: 12))
+    }
+
+    private func formatBriefingNumber(_ number: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
     }
 
     private var loadingSection: some View {
@@ -376,11 +459,34 @@ struct ExecutiveBriefingPDFService {
             briefingText.draw(in: briefingRect, withAttributes: bodyAttrs)
             y += 220
 
+            if let latest = results.last {
+                let savings = BenchmarkEngine.estimatedAnnualSavings(industry: profile.industry, companySize: profile.companySize, currentScore: latest.overallScore)
+                let hours = BenchmarkEngine.productivityHoursEstimate(companySize: profile.companySize, currentScore: latest.overallScore)
+
+                "PROJECTED IMPACT".draw(at: CGPoint(x: margin, y: y), withAttributes: sectionAttrs)
+                y += 25
+
+                let savingsFormatter = NumberFormatter()
+                savingsFormatter.numberStyle = .decimal
+                let lowStr = savingsFormatter.string(from: NSNumber(value: savings.low)) ?? "\(savings.low)"
+                let highStr = savingsFormatter.string(from: NSNumber(value: savings.high)) ?? "\(savings.high)"
+                let hoursStr = savingsFormatter.string(from: NSNumber(value: hours.annualHours)) ?? "\(hours.annualHours)"
+
+                "Estimated Annual Productivity Value: $\(lowStr)\u{2013}$\(highStr)".draw(at: CGPoint(x: margin, y: y), withAttributes: metricAttrs)
+                y += 20
+                "Recoverable Team Hours: ~\(hoursStr) hours/year".draw(at: CGPoint(x: margin, y: y), withAttributes: metricAttrs)
+                y += 20
+
+                let noteAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 10, weight: .regular), .foregroundColor: tealColor]
+                "All projections focus on productivity enhancement \u{2014} empowering teams to accomplish more, not reducing headcount.".draw(at: CGPoint(x: margin, y: y), withAttributes: noteAttrs)
+                y += 30
+            }
+
             "NEXT STEPS".draw(at: CGPoint(x: margin, y: y), withAttributes: sectionAttrs)
             y += 25
 
-            let ctaText = "For a personalized strategy consultation based on this briefing, contact the M5CAIRO team:\n\nWebsite: https://m5cairo.com\nEmail: contact@m5cairo.com"
-            let ctaRect = CGRect(x: margin, y: y, width: contentWidth, height: 100)
+            let ctaText = "For a personalized strategy consultation based on this briefing, contact the M5CAIRO team:\n\nWebsite: https://m5cairo.com\nEmail: contact@m5cairo.com\n\nPremium advisory services (1-on-1 strategy, custom AI integration, board-ready reports) available \u{2014} contact for pricing."
+            let ctaRect = CGRect(x: margin, y: y, width: contentWidth, height: 120)
             ctaText.draw(in: ctaRect, withAttributes: bodyAttrs)
 
             let footerAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 10, weight: .regular), .foregroundColor: UIColor.lightGray]

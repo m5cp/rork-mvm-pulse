@@ -66,7 +66,7 @@ struct RoadmapView: View {
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     } else {
-                        Text("Upgrade to Premium to unlock your personalized 12-week action plan.")
+                        Text("Upgrade to Business to unlock your personalized 12-week action plan.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)

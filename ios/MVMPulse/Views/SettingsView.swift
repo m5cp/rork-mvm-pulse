@@ -318,8 +318,8 @@ struct SettingsView: View {
         Section("Subscription") {
             if store.isPremium {
                 HStack {
-                    Label("Premium", systemImage: "crown.fill")
-                        .foregroundStyle(.orange)
+                    Label("Business", systemImage: "building.2.fill")
+                        .foregroundStyle(PulseTheme.primaryTeal)
                     Spacer()
                     Text("Active")
                         .font(.subheadline)
@@ -330,7 +330,7 @@ struct SettingsView: View {
                     showPaywall = true
                 } label: {
                     HStack {
-                        Label("Upgrade to Premium", systemImage: "crown.fill")
+                        Label("Upgrade to Business", systemImage: "building.2.fill")
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)
