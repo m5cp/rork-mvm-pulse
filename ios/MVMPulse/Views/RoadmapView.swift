@@ -119,7 +119,7 @@ struct RoadmapView: View {
                 Image(systemName: "lock.fill")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                Text("Unlock with Premium to see all 12 weeks")
+                Text("Unlock with Business to see all 12 weeks")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

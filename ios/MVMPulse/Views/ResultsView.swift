@@ -488,7 +488,7 @@ struct CategoryResultCard: View {
             HStack(spacing: 8) {
                 Image(systemName: "lock.fill")
                     .foregroundStyle(catColor)
-                Text("Upgrade to Premium for detailed analysis")
+                Text("Upgrade to Business for detailed analysis")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

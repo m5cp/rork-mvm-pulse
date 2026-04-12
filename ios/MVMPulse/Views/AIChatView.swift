@@ -86,7 +86,7 @@ struct AIChatView: View {
             Button {
                 showPaywall = true
             } label: {
-                Text("Unlock with Premium")
+                Text("Unlock with Business")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)

@@ -56,6 +56,7 @@ struct LaunchAnimationView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let particleCount = 160
+    @State private var screenSize: CGSize = CGSize(width: 400, height: 800)
 
     var body: some View {
         ZStack {
@@ -102,6 +103,11 @@ struct LaunchAnimationView: View {
             }
             generateParticles()
             runCinematicSequence()
+        }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            screenSize = newSize
         }
     }
 
@@ -364,8 +370,8 @@ struct LaunchAnimationView: View {
 
 
     private func generateParticles() {
-        let screenW: CGFloat = UIScreen.main.bounds.width
-        let screenH: CGFloat = UIScreen.main.bounds.height
+        let screenW: CGFloat = screenSize.width
+        let screenH: CGFloat = screenSize.height
         particles = (0..<particleCount).map { _ in
             LaunchParticle(
                 startX: CGFloat.random(in: -40...screenW + 40),

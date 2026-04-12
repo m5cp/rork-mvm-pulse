@@ -143,28 +143,35 @@ struct SettingsView: View {
 
     private var profileSection: some View {
         Section("Profile") {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(PulseTheme.primaryTeal.opacity(0.15))
-                        .frame(width: 44, height: 44)
-                    Text(String(storage.userProfile.firstName.prefix(1)).uppercased())
-                        .font(.title3.bold())
-                        .foregroundStyle(PulseTheme.primaryTeal)
-                }
+            Button {
+                editingProfile = true
+            } label: {
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(PulseTheme.primaryTeal.opacity(0.15))
+                            .frame(width: 44, height: 44)
+                        Text(String(storage.userProfile.firstName.prefix(1)).uppercased())
+                            .font(.title3.bold())
+                            .foregroundStyle(PulseTheme.primaryTeal)
+                    }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(storage.userProfile.firstName.isEmpty ? "Set up profile" : storage.userProfile.firstName)
-                        .font(.body.bold())
-                    Text("\(storage.userProfile.role.rawValue) \u{00B7} \(storage.userProfile.industry.rawValue)")
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(storage.userProfile.firstName.isEmpty ? "Set up profile" : storage.userProfile.firstName)
+                            .font(.body.bold())
+                            .foregroundStyle(.primary)
+                        Text("\(storage.userProfile.role.rawValue) \u{00B7} \(storage.userProfile.industry.rawValue)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                 }
-
-                Spacer()
             }
-            .contentShape(Rectangle())
-            .onTapGesture { editingProfile = true }
         }
     }
 
