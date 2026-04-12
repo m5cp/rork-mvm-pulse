@@ -5,6 +5,7 @@ struct ReassessmentCompareView: View {
     let newResult: AssessmentResult
     let ai: AIViewModel
     let storage: StorageService
+    let store: StoreViewModel
     let onDismiss: () -> Void
 
     var body: some View {
@@ -186,7 +187,8 @@ struct ReassessmentCompareView: View {
                 oldResult: oldResult,
                 newResult: newResult,
                 profile: storage.userProfile,
-                completedTasks: completedTasks
+                completedTasks: completedTasks,
+                isPremium: store.isPremium
             )
         }
     }

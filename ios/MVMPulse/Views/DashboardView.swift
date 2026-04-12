@@ -177,7 +177,7 @@ struct DashboardView: View {
                         .staggerIn(appeared: cardsAppeared, index: 2, reduceMotion: reduceMotion)
 
                     if !storage.hasCheckedInToday && storage.hasCompletedAssessment {
-                        DailyCheckInView(storage: storage, ai: ai) {
+                        DailyCheckInView(storage: storage, store: store, ai: ai) {
                             showCheckIn = false
                         }
                         .staggerIn(appeared: cardsAppeared, index: 3, reduceMotion: reduceMotion)
@@ -366,7 +366,7 @@ struct DashboardView: View {
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(.rect(cornerRadius: 16))
         .onAppear {
-            ai.loadDailyTip(result: result, profile: storage.userProfile, streakDays: storage.streakData.currentStreak)
+            ai.loadDailyTip(result: result, profile: storage.userProfile, streakDays: storage.streakData.currentStreak, isPremium: store.isPremium)
         }
     }
 
@@ -862,7 +862,7 @@ struct DashboardView: View {
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(.rect(cornerRadius: 16))
         .onAppear {
-            ai.loadWeeklyInsights(result: result, profile: storage.userProfile, completedTasks: completedTasks, totalTasks: totalTasks)
+            ai.loadWeeklyInsights(result: result, profile: storage.userProfile, completedTasks: completedTasks, totalTasks: totalTasks, isPremium: store.isPremium)
         }
     }
 

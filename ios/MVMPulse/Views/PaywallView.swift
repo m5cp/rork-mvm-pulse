@@ -100,10 +100,65 @@ struct PaywallView: View {
             comparisonRow("Reassessment insights", free: false, premium: true)
             comparisonRow("Streak tracking & milestones", free: false, premium: true)
             comparisonRow("Weekly insights", free: false, premium: true)
+
+            Divider().padding(.vertical, 4)
+
+            aiUsageSection
         }
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(.rect(cornerRadius: 16))
+    }
+
+    private var aiUsageSection: some View {
+        VStack(spacing: 6) {
+            HStack {
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .font(.caption2)
+                        .foregroundStyle(PulseTheme.primaryTeal)
+                    Text("AI Features")
+                        .font(.caption.bold())
+                        .foregroundStyle(PulseTheme.primaryTeal)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("Free")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 50)
+
+                Text("Premium")
+                    .font(.caption2.bold())
+                    .foregroundStyle(PulseTheme.primaryTeal)
+                    .frame(width: 65)
+            }
+            .padding(.bottom, 4)
+
+            aiLimitRow("AI Coach chat", freeLabel: "\u{2014}", premiumLabel: "50/day")
+            aiLimitRow("AI insights", freeLabel: "5/day", premiumLabel: "25/day")
+            aiLimitRow("Category Q&A", freeLabel: "2/day", premiumLabel: "15/day")
+        }
+    }
+
+    private func aiLimitRow(_ feature: String, freeLabel: String, premiumLabel: String) -> some View {
+        HStack {
+            Text(feature)
+                .font(.caption)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(freeLabel)
+                .font(.caption2.bold())
+                .foregroundStyle(freeLabel == "\u{2014}" ? Color(.tertiaryLabel) : .secondary)
+                .frame(width: 50)
+
+            Text(premiumLabel)
+                .font(.caption2.bold())
+                .foregroundStyle(PulseTheme.primaryTeal)
+                .frame(width: 65)
+        }
+        .padding(.vertical, 3)
     }
 
     private var comparisonHeader: some View {

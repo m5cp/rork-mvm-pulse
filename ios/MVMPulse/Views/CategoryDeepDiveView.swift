@@ -383,9 +383,18 @@ struct CategoryDeepDiveView: View {
         .disabled(isAskingAI)
     }
 
+    private var qaRemaining: Int {
+        ai.usage.remaining(.categoryQA, tier: store.isPremium ? .premium : .free)
+    }
+
     private func askAI() {
         let question = askAIQuestion.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty, !isAskingAI else { return }
+        let tier: AIUsageTier = store.isPremium ? .premium : .free
+        guard ai.usage.canPerform(.categoryQA, tier: tier) else {
+            askAIAnswer = "You\u{2019}ve reached your daily Q&A limit. Resets at midnight."
+            return
+        }
         isAskingAI = true
         askAIAnswer = nil
         Task {
@@ -395,6 +404,7 @@ struct CategoryDeepDiveView: View {
                 question: question,
                 profile: storage.userProfile
             )
+            if answer != nil { ai.usage.recordUsage(.categoryQA) }
             askAIAnswer = answer ?? "I couldn't generate an answer right now. Please try again."
             isAskingAI = false
         }

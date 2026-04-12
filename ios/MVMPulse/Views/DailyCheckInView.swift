@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DailyCheckInView: View {
     let storage: StorageService
+    let store: StoreViewModel
     let ai: AIViewModel
     let onComplete: () -> Void
     @State private var selectedMood: CheckInMood?
@@ -138,7 +139,8 @@ struct DailyCheckInView: View {
             mood: mood,
             recentMoods: storage.dailyCheckIns,
             result: storage.latestResult,
-            profile: storage.userProfile
+            profile: storage.userProfile,
+            isPremium: store.isPremium
         )
 
         Task {

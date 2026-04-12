@@ -208,7 +208,7 @@ struct ResultsView: View {
             .background(Color(.secondarySystemGroupedBackground))
             .clipShape(.rect(cornerRadius: 16))
             .onAppear {
-                ai.loadExecutiveSummary(result: result, profile: storage.userProfile)
+                ai.loadExecutiveSummary(result: result, profile: storage.userProfile, isPremium: store.isPremium)
             }
         }
     }
@@ -310,7 +310,7 @@ struct ResultsView: View {
                 .strokeBorder(PulseTheme.primaryTeal.opacity(0.12), lineWidth: 1)
         )
         .onAppear {
-            ai.loadAnswerAnalysis(result: result, profile: storage.userProfile)
+            ai.loadAnswerAnalysis(result: result, profile: storage.userProfile, isPremium: store.isPremium)
         }
     }
 

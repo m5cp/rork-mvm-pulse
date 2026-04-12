@@ -12,6 +12,14 @@ struct AIChatView: View {
 
     private let groq = GroqService()
 
+    private var chatRemaining: Int {
+        ai.usage.remaining(.chatMessage, tier: .premium)
+    }
+
+    private var chatLimit: Int {
+        AIUsageLimits.premium.chatMessagesPerDay
+    }
+
     private var suggestedPrompts: [String] {
         var prompts = [
             "What should I focus on this week?",
@@ -135,6 +143,10 @@ struct AIChatView: View {
                             .padding(.horizontal, 20)
                             .id("loading")
                         }
+
+                        if chatRemaining == 0 && !isLoading {
+                            usageLimitBanner
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
@@ -159,8 +171,42 @@ struct AIChatView: View {
 
             Divider()
 
+            usageIndicator
+
             inputBar
         }
+    }
+
+    private var usageIndicator: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "sparkle")
+                .font(.caption2)
+                .foregroundStyle(chatRemaining > 10 ? PulseTheme.primaryTeal : (chatRemaining > 0 ? .orange : .red))
+            Text("\(chatRemaining)/\(chatLimit) messages remaining today")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+    }
+
+    private var usageLimitBanner: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "exclamationmark.circle")
+                .font(.title3)
+                .foregroundStyle(.orange)
+            Text("Daily Limit Reached")
+                .font(.subheadline.bold())
+            Text("You\u{2019}ve used all \(chatLimit) AI Coach messages for today. Your limit resets at midnight.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity)
+        .background(.orange.opacity(0.08))
+        .clipShape(.rect(cornerRadius: 14))
     }
 
     private var welcomeCard: some View {
@@ -206,6 +252,7 @@ struct AIChatView: View {
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
+                    .disabled(chatRemaining == 0)
                 }
             }
         }
@@ -214,7 +261,7 @@ struct AIChatView: View {
 
     private var inputBar: some View {
         HStack(spacing: 10) {
-            TextField("Ask your coach...", text: $inputText, axis: .vertical)
+            TextField(chatRemaining > 0 ? "Ask your coach..." : "Daily limit reached", text: $inputText, axis: .vertical)
                 .font(.subheadline)
                 .lineLimit(1...4)
                 .padding(.horizontal, 14)
@@ -222,6 +269,7 @@ struct AIChatView: View {
                 .background(Color(.tertiarySystemGroupedBackground))
                 .clipShape(.rect(cornerRadius: 20))
                 .focused($isInputFocused)
+                .disabled(chatRemaining == 0)
 
             Button {
                 let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -231,12 +279,12 @@ struct AIChatView: View {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.title2)
                     .foregroundStyle(
-                        inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || chatRemaining == 0
                             ? Color(.tertiaryLabel)
                             : PulseTheme.primaryTeal
                     )
             }
-            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading)
+            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isLoading || chatRemaining == 0)
             .sensoryFeedback(.impact(weight: .light), trigger: messages.count)
         }
         .padding(.horizontal, 16)
@@ -245,6 +293,8 @@ struct AIChatView: View {
     }
 
     private func sendMessage(_ text: String) {
+        guard ai.usage.canPerform(.chatMessage, tier: .premium) else { return }
+
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
         inputText = ""
@@ -256,6 +306,10 @@ struct AIChatView: View {
             let groqMessages = messages.map { GroqChatMessage(role: $0.role == .user ? "user" : "assistant", content: $0.content) }
 
             let response = await groq.chatConversation(messages: groqMessages, systemPrompt: systemPrompt)
+
+            if response != nil {
+                ai.usage.recordUsage(.chatMessage)
+            }
 
             let assistantMessage = ChatMessage(
                 role: .assistant,
