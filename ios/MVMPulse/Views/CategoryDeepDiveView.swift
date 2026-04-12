@@ -5,8 +5,12 @@ struct CategoryDeepDiveView: View {
     let category: AssessmentCategory
     let storage: StorageService
     let store: StoreViewModel
+    let ai: AIViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var appeared: Bool = false
+    @State private var askAIQuestion: String = ""
+    @State private var askAIAnswer: String?
+    @State private var isAskingAI: Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var catColor: Color {
@@ -62,6 +66,11 @@ struct CategoryDeepDiveView: View {
 
                 tipCard
                     .staggerIn(appeared: appeared, index: 5, reduceMotion: reduceMotion)
+
+                if ai.isAvailable && store.isPremium {
+                    askAICard
+                        .staggerIn(appeared: appeared, index: 6, reduceMotion: reduceMotion)
+                }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -289,6 +298,106 @@ struct CategoryDeepDiveView: View {
         .padding(16)
         .background(.orange.opacity(0.06))
         .clipShape(.rect(cornerRadius: 16))
+    }
+
+    private var askAICard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(.subheadline)
+                    .foregroundStyle(PulseTheme.primaryTeal)
+                Text("Ask AI")
+                    .font(.subheadline.bold())
+            }
+
+            Text("Ask anything about your \(category.rawValue) score")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 10) {
+                TextField("e.g. How do I improve this?", text: $askAIQuestion)
+                    .font(.subheadline)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(Color(.tertiarySystemGroupedBackground))
+                    .clipShape(.rect(cornerRadius: 10))
+
+                Button {
+                    askAI()
+                } label: {
+                    if isAskingAI {
+                        ProgressView()
+                            .controlSize(.small)
+                            .frame(width: 32, height: 32)
+                    } else {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(
+                                askAIQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                    ? Color(.tertiaryLabel)
+                                    : PulseTheme.primaryTeal
+                            )
+                    }
+                }
+                .disabled(askAIQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAskingAI)
+            }
+
+            if let answer = askAIAnswer {
+                Text(answer)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(PulseTheme.primaryTeal.opacity(0.06))
+                    .clipShape(.rect(cornerRadius: 10))
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    quickPromptChip("How do I improve this?")
+                    quickPromptChip("What's a quick win?")
+                    quickPromptChip("Why does this matter?")
+                }
+            }
+            .contentMargins(.horizontal, 0)
+        }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(.rect(cornerRadius: 16))
+    }
+
+    private func quickPromptChip(_ text: String) -> some View {
+        Button {
+            askAIQuestion = text
+            askAI()
+        } label: {
+            Text(text)
+                .font(.caption)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color(.tertiarySystemGroupedBackground))
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .disabled(isAskingAI)
+    }
+
+    private func askAI() {
+        let question = askAIQuestion.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !question.isEmpty, !isAskingAI else { return }
+        isAskingAI = true
+        askAIAnswer = nil
+        Task {
+            let answer = await ai.groq.generateCategoryQA(
+                category: category,
+                score: currentScore,
+                question: question,
+                profile: storage.userProfile
+            )
+            askAIAnswer = answer ?? "I couldn't generate an answer right now. Please try again."
+            isAskingAI = false
+        }
     }
 
     private var categoryTips: [String] {

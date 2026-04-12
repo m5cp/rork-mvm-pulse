@@ -30,6 +30,12 @@ struct ResultsView: View {
                     .opacity(highlightRevealed ? 1 : 0)
                     .offset(y: highlightRevealed ? 0 : 20)
 
+                if ai.isAvailable && store.isPremium {
+                    answerAnalysisCard
+                        .opacity(cardsRevealed ? 1 : 0)
+                        .offset(y: cardsRevealed ? 0 : 25)
+                }
+
                 categoryCards
                     .opacity(cardsRevealed ? 1 : 0)
                     .offset(y: cardsRevealed ? 0 : 30)
@@ -263,6 +269,48 @@ struct ResultsView: View {
                 }
                 .staggerIn(appeared: cardsRevealed, index: index, reduceMotion: reduceMotion)
             }
+        }
+    }
+
+    private var answerAnalysisCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "brain.head.profile")
+                    .font(.subheadline)
+                    .foregroundStyle(PulseTheme.primaryTeal)
+                Text("Pattern Analysis")
+                    .font(.headline)
+                Spacer()
+                if ai.isLoadingAnalysis {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if ai.aiAnswerAnalysis != nil {
+                    Image(systemName: "sparkles")
+                        .font(.caption)
+                        .foregroundStyle(PulseTheme.primaryTeal)
+                }
+            }
+
+            if let analysis = ai.aiAnswerAnalysis {
+                Text(analysis)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if ai.isLoadingAnalysis {
+                Text("Analyzing patterns across your 8 dimensions...")
+                    .font(.subheadline)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(16)
+        .background(PulseTheme.primaryTeal.opacity(0.06))
+        .clipShape(.rect(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(PulseTheme.primaryTeal.opacity(0.12), lineWidth: 1)
+        )
+        .onAppear {
+            ai.loadAnswerAnalysis(result: result, profile: storage.userProfile)
         }
     }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DailyCheckInView: View {
     let storage: StorageService
+    let ai: AIViewModel
     let onComplete: () -> Void
     @State private var selectedMood: CheckInMood?
     @State private var note: String = ""
@@ -84,6 +85,34 @@ struct DailyCheckInView: View {
                 .disabled(submitted)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
+
+            if submitted, ai.isAvailable {
+                if ai.isLoadingReflection {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Reflecting...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .transition(.opacity)
+                } else if let reflection = ai.aiCheckInReflection {
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "sparkles")
+                            .font(.caption)
+                            .foregroundStyle(PulseTheme.primaryTeal)
+                            .padding(.top, 2)
+                        Text(reflection)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(12)
+                    .background(PulseTheme.primaryTeal.opacity(0.06))
+                    .clipShape(.rect(cornerRadius: 12))
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
+            }
         }
         .padding(20)
         .background(Color(.secondarySystemGroupedBackground))
@@ -105,8 +134,15 @@ struct DailyCheckInView: View {
             submitted = true
         }
 
+        ai.loadCheckInReflection(
+            mood: mood,
+            recentMoods: storage.dailyCheckIns,
+            result: storage.latestResult,
+            profile: storage.userProfile
+        )
+
         Task {
-            try? await Task.sleep(for: .seconds(1.2))
+            try? await Task.sleep(for: .seconds(4.0))
             onComplete()
         }
     }

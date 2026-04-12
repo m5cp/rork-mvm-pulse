@@ -19,6 +19,10 @@ struct ContentView: View {
                     AssessTabView(storage: storage, store: store, ai: ai)
                 }
 
+                Tab("Coach", systemImage: "sparkles", value: .coach) {
+                    AIChatView(storage: storage, store: store, ai: ai)
+                }
+
                 Tab("Roadmap", systemImage: "map.fill", value: .roadmap) {
                     RoadmapView(storage: storage, store: store)
                 }

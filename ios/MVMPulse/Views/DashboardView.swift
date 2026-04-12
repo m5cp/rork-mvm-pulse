@@ -68,7 +68,7 @@ struct DashboardView: View {
                 }
                 .sheet(item: $selectedCategory) { category in
                     NavigationStack {
-                        CategoryDeepDiveView(category: category, storage: storage, store: store)
+                        CategoryDeepDiveView(category: category, storage: storage, store: store, ai: ai)
                     }
                 }
                 .sensoryFeedback(.success, trigger: taskCompletionHaptic)
@@ -177,7 +177,7 @@ struct DashboardView: View {
                         .staggerIn(appeared: cardsAppeared, index: 2, reduceMotion: reduceMotion)
 
                     if !storage.hasCheckedInToday && storage.hasCompletedAssessment {
-                        DailyCheckInView(storage: storage) {
+                        DailyCheckInView(storage: storage, ai: ai) {
                             showCheckIn = false
                         }
                         .staggerIn(appeared: cardsAppeared, index: 3, reduceMotion: reduceMotion)

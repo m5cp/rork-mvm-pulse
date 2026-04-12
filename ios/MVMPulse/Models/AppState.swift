@@ -3,8 +3,9 @@ import Foundation
 nonisolated enum AppTab: Int, Codable, Sendable {
     case dashboard = 0
     case assess = 1
-    case roadmap = 2
-    case settings = 3
+    case coach = 2
+    case roadmap = 3
+    case settings = 4
 }
 
 nonisolated enum AppearanceMode: String, Codable, CaseIterable, Sendable {

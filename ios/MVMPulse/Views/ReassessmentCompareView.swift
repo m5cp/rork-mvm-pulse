@@ -3,6 +3,8 @@ import SwiftUI
 struct ReassessmentCompareView: View {
     let oldResult: AssessmentResult
     let newResult: AssessmentResult
+    let ai: AIViewModel
+    let storage: StorageService
     let onDismiss: () -> Void
 
     var body: some View {
@@ -133,11 +135,59 @@ struct ReassessmentCompareView: View {
     }
 
     private var ctaSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 16) {
+            if ai.isAvailable {
+                narrativeCard
+            }
+
             Text("Your roadmap has been updated based on your new results.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+        }
+    }
+
+    private var narrativeCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(.subheadline)
+                    .foregroundStyle(PulseTheme.primaryTeal)
+                Text("Your Journey")
+                    .font(.headline)
+                Spacer()
+                if ai.isLoadingNarrative {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+
+            if let narrative = ai.aiProgressNarrative {
+                Text(narrative)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if ai.isLoadingNarrative {
+                Text("Analyzing your progress...")
+                    .font(.subheadline)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(16)
+        .background(PulseTheme.primaryTeal.opacity(0.06))
+        .clipShape(.rect(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(PulseTheme.primaryTeal.opacity(0.12), lineWidth: 1)
+        )
+        .onAppear {
+            let completedTasks = storage.roadmap.weeks.flatMap(\.tasks).filter(\.isCompleted).count
+            ai.loadProgressNarrative(
+                oldResult: oldResult,
+                newResult: newResult,
+                profile: storage.userProfile,
+                completedTasks: completedTasks
+            )
         }
     }
 
