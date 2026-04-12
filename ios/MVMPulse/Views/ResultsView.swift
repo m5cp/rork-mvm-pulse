@@ -4,6 +4,7 @@ struct ResultsView: View {
     let result: AssessmentResult
     let storage: StorageService
     let store: StoreViewModel
+    let ai: AIViewModel
     @State private var showShareComposer: Bool = false
     @State private var showPDFPreview: Bool = false
     @State private var expandedCategory: AssessmentCategory?
@@ -169,18 +170,40 @@ struct ResultsView: View {
             }
 
             VStack(spacing: 12) {
-                Text("Executive Summary")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack {
+                    Text("Executive Summary")
+                        .font(.headline)
+                    Spacer()
+                    if ai.isAvailable {
+                        if ai.isLoadingSummary {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else if ai.aiSummary != nil {
+                            Image(systemName: "sparkles")
+                                .font(.caption)
+                                .foregroundStyle(PulseTheme.primaryTeal)
+                        }
+                    }
+                }
 
-                Text(AnalysisEngine.executiveSummary(result: result, profile: storage.userProfile))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if let aiText = ai.aiSummary {
+                    Text(aiText)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text(AnalysisEngine.executiveSummary(result: result, profile: storage.userProfile))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(16)
             .background(Color(.secondarySystemGroupedBackground))
             .clipShape(.rect(cornerRadius: 16))
+            .onAppear {
+                ai.loadExecutiveSummary(result: result, profile: storage.userProfile)
+            }
         }
     }
 

@@ -3,6 +3,7 @@ import SwiftUI
 struct AssessmentHistoryView: View {
     let storage: StorageService
     let store: StoreViewModel
+    var ai: AIViewModel = AIViewModel()
     @State private var selectedResult: AssessmentResult?
     @Environment(\.dismiss) private var dismiss
 
@@ -34,7 +35,7 @@ struct AssessmentHistoryView: View {
         }
         .sheet(item: $selectedResult) { result in
             NavigationStack {
-                ResultsView(result: result, storage: storage, store: store)
+                ResultsView(result: result, storage: storage, store: store, ai: ai)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button("Done") { selectedResult = nil }

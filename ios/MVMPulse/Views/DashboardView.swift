@@ -4,6 +4,7 @@ import Charts
 struct DashboardView: View {
     let storage: StorageService
     let store: StoreViewModel
+    let ai: AIViewModel
     @Binding var selectedTab: AppTab
     @State private var showAssessment: Bool = false
     @State private var showDeepDive: Bool = false
@@ -44,12 +45,12 @@ struct DashboardView: View {
                 .navigationTitle(greeting)
                 .fullScreenCover(isPresented: $showAssessment) {
                     NavigationStack {
-                        AssessmentFlowContainer(storage: storage, store: store, selectedTab: $selectedTab, mode: .quick)
+                        AssessmentFlowContainer(storage: storage, store: store, ai: ai, selectedTab: $selectedTab, mode: .quick)
                     }
                 }
                 .fullScreenCover(isPresented: $showDeepDive) {
                     NavigationStack {
-                        AssessmentFlowContainer(storage: storage, store: store, selectedTab: $selectedTab, mode: .deepDive)
+                        AssessmentFlowContainer(storage: storage, store: store, ai: ai, selectedTab: $selectedTab, mode: .deepDive)
                     }
                 }
                 .sheet(item: $showMilestone) { milestone in
@@ -62,7 +63,7 @@ struct DashboardView: View {
                 }
                 .sheet(isPresented: $showAssessmentHistory) {
                     NavigationStack {
-                        AssessmentHistoryView(storage: storage, store: store)
+                        AssessmentHistoryView(storage: storage, store: store, ai: ai)
                     }
                 }
                 .sheet(item: $selectedCategory) { category in
@@ -326,26 +327,31 @@ struct DashboardView: View {
         let tip = DailyTipsEngine.tipOfTheDay(for: result, streakData: storage.streakData)
         return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                Image(systemName: tip.icon)
+                Image(systemName: ai.aiDailyTip != nil ? "sparkles" : tip.icon)
                     .font(.subheadline)
-                    .foregroundStyle(tip.category.map { PulseTheme.categoryColor(for: $0) } ?? .orange)
+                    .foregroundStyle(ai.aiDailyTip != nil ? PulseTheme.primaryTeal : (tip.category.map { PulseTheme.categoryColor(for: $0) } ?? .orange))
 
-                Text(tip.title)
+                Text(ai.aiDailyTip != nil ? "AI Coach" : tip.title)
                     .font(.subheadline.bold())
 
                 Spacer()
 
-                Text("Daily Tip")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                if ai.isLoadingTip {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Text("Daily Tip")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
             }
 
-            Text(tip.body)
+            Text(ai.aiDailyTip ?? tip.body)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let actionLabel = tip.actionLabel {
+            if ai.aiDailyTip == nil, let actionLabel = tip.actionLabel {
                 Button {
                     selectedTab = .roadmap
                 } label: {
@@ -359,6 +365,9 @@ struct DashboardView: View {
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(.rect(cornerRadius: 16))
+        .onAppear {
+            ai.loadDailyTip(result: result, profile: storage.userProfile, streakDays: storage.streakData.currentStreak)
+        }
     }
 
     private var moodTrendCard: some View {
@@ -799,28 +808,52 @@ struct DashboardView: View {
             roadmap: storage.roadmap,
             streakData: storage.streakData
         )
+        let completedTasks = storage.roadmap.weeks.flatMap(\.tasks).filter(\.isCompleted).count
+        let totalTasks = storage.roadmap.weeks.flatMap(\.tasks).count
+
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Image(systemName: "lightbulb.fill")
-                    .foregroundStyle(.orange)
+                Image(systemName: ai.aiWeeklyInsights != nil ? "sparkles" : "lightbulb.fill")
+                    .foregroundStyle(ai.aiWeeklyInsights != nil ? PulseTheme.primaryTeal : .orange)
                 Text("Weekly Insights")
                     .font(.subheadline.bold())
+                Spacer()
+                if ai.isLoadingInsights {
+                    ProgressView()
+                        .controlSize(.small)
+                }
             }
 
-            ForEach(insights.prefix(3)) { insight in
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: insight.icon)
-                        .font(.subheadline)
-                        .foregroundStyle(insight.category.map { PulseTheme.categoryColor(for: $0) } ?? PulseTheme.primaryTeal)
-                        .frame(width: 24, height: 24)
+            if let aiInsights = ai.aiWeeklyInsights {
+                ForEach(Array(aiInsights.prefix(3).enumerated()), id: \.offset) { index, insight in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: ["brain.head.profile", "target", "chart.line.uptrend.xyaxis"][index % 3])
+                            .font(.subheadline)
+                            .foregroundStyle(PulseTheme.primaryTeal)
+                            .frame(width: 24, height: 24)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(insight.title)
-                            .font(.caption.bold())
-                        Text(insight.body)
+                        Text(insight)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            } else {
+                ForEach(insights.prefix(3)) { insight in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: insight.icon)
+                            .font(.subheadline)
+                            .foregroundStyle(insight.category.map { PulseTheme.categoryColor(for: $0) } ?? PulseTheme.primaryTeal)
+                            .frame(width: 24, height: 24)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(insight.title)
+                                .font(.caption.bold())
+                            Text(insight.body)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 }
             }
@@ -828,6 +861,9 @@ struct DashboardView: View {
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(.rect(cornerRadius: 16))
+        .onAppear {
+            ai.loadWeeklyInsights(result: result, profile: storage.userProfile, completedTasks: completedTasks, totalTasks: totalTasks)
+        }
     }
 
     private var premiumPromptCard: some View {
@@ -936,6 +972,7 @@ struct DashboardView: View {
 struct AssessmentFlowContainer: View {
     let storage: StorageService
     let store: StoreViewModel
+    let ai: AIViewModel
     @Binding var selectedTab: AppTab
     let mode: AssessmentMode
     @State private var phase: AssessmentFlowPhase = .questions
@@ -1013,7 +1050,7 @@ struct AssessmentFlowContainer: View {
             }
         case .results:
             if let result {
-                ResultsView(result: result, storage: storage, store: store)
+                ResultsView(result: result, storage: storage, store: store, ai: ai)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             Button("Done") { dismiss() }

@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var storage = StorageService()
     @State private var store = StoreViewModel()
+    @State private var ai = AIViewModel()
     @State private var selectedTab: AppTab = .dashboard
     @State private var showOnboarding: Bool = false
     @State private var showLaunch: Bool = true
@@ -11,11 +12,11 @@ struct ContentView: View {
         ZStack {
             TabView(selection: $selectedTab) {
                 Tab("Dashboard", systemImage: "square.grid.2x2.fill", value: .dashboard) {
-                    DashboardView(storage: storage, store: store, selectedTab: $selectedTab)
+                    DashboardView(storage: storage, store: store, ai: ai, selectedTab: $selectedTab)
                 }
 
                 Tab("Assess", systemImage: "waveform.path.ecg", value: .assess) {
-                    AssessTabView(storage: storage, store: store)
+                    AssessTabView(storage: storage, store: store, ai: ai)
                 }
 
                 Tab("Roadmap", systemImage: "map.fill", value: .roadmap) {
@@ -62,6 +63,7 @@ struct ContentView: View {
 struct AssessTabView: View {
     let storage: StorageService
     let store: StoreViewModel
+    let ai: AIViewModel
     @State private var showAssessment: Bool = false
 
     var body: some View {
@@ -116,7 +118,7 @@ struct AssessTabView: View {
             .navigationTitle("Assess")
             .fullScreenCover(isPresented: $showAssessment) {
                 NavigationStack {
-                    AssessmentFlowContainer(storage: storage, store: store, selectedTab: .constant(.assess), mode: .quick)
+                    AssessmentFlowContainer(storage: storage, store: store, ai: ai, selectedTab: .constant(.assess), mode: .quick)
                 }
             }
         }
