@@ -12,9 +12,11 @@ struct PDFReportService {
         let data = renderer.pdfData { context in
             drawCoverPage(context: context, result: result, profile: profile, pageWidth: pageWidth, pageHeight: pageHeight, margin: margin)
             drawScoreBreakdown(context: context, result: result, pageWidth: pageWidth, pageHeight: pageHeight, margin: margin, contentWidth: contentWidth)
+            drawIndustryBenchmarks(context: context, result: result, profile: profile, pageWidth: pageWidth, pageHeight: pageHeight, margin: margin, contentWidth: contentWidth)
             drawCategoryAnalysis(context: context, result: result, pageWidth: pageWidth, pageHeight: pageHeight, margin: margin, contentWidth: contentWidth)
             drawRecommendations(context: context, result: result, pageWidth: pageWidth, pageHeight: pageHeight, margin: margin, contentWidth: contentWidth)
             drawRoadmapOverview(context: context, roadmap: roadmap, pageWidth: pageWidth, pageHeight: pageHeight, margin: margin, contentWidth: contentWidth)
+            drawWhatsNextPage(context: context, result: result, profile: profile, pageWidth: pageWidth, pageHeight: pageHeight, margin: margin, contentWidth: contentWidth)
             drawDisclaimerPage(context: context, pageWidth: pageWidth, pageHeight: pageHeight, margin: margin, contentWidth: contentWidth)
         }
 
@@ -200,6 +202,125 @@ struct PDFReportService {
 
         let footerAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 10, weight: .regular), .foregroundColor: UIColor.lightGray]
         "MVM Pulse by M5CAIRO".draw(at: CGPoint(x: margin, y: pageHeight - 50), withAttributes: footerAttrs)
+    }
+
+    private static func drawIndustryBenchmarks(context: UIGraphicsPDFRendererContext, result: AssessmentResult, profile: UserProfile, pageWidth: CGFloat, pageHeight: CGFloat, margin: CGFloat, contentWidth: CGFloat) {
+        context.beginPage()
+        let tealColor = UIColor(red: 9/255, green: 119/255, blue: 112/255, alpha: 1)
+        let headerAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 24, weight: .bold), .foregroundColor: UIColor(red: 17/255, green: 17/255, blue: 17/255, alpha: 1)]
+        "Industry Benchmark".draw(at: CGPoint(x: margin, y: margin), withAttributes: headerAttrs)
+
+        let subtitleAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 12, weight: .regular), .foregroundColor: UIColor.gray]
+        "How your scores compare to the average \(profile.industry.rawValue.lowercased()) professional".draw(at: CGPoint(x: margin, y: margin + 35), withAttributes: subtitleAttrs)
+
+        let benchmarks = BenchmarkEngine.industryBenchmarks(result: result, industry: profile.industry, companySize: profile.companySize)
+        var y: CGFloat = margin + 70
+
+        let nameAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: UIColor.black]
+        let valueAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 13, weight: .bold), .foregroundColor: tealColor]
+        let avgAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 11, weight: .regular), .foregroundColor: UIColor.gray]
+        let deltaAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 11, weight: .bold)]
+
+        for bm in benchmarks {
+            bm.category.rawValue.draw(at: CGPoint(x: margin, y: y), withAttributes: nameAttrs)
+
+            let scoreStr = "\(Int(bm.userScore))%"
+            scoreStr.draw(at: CGPoint(x: margin + 200, y: y), withAttributes: valueAttrs)
+
+            let avgStr = "Avg: \(Int(bm.industryAverage))%"
+            avgStr.draw(at: CGPoint(x: margin + 260, y: y), withAttributes: avgAttrs)
+
+            let deltaStr = bm.delta >= 0 ? "+\(Int(bm.delta))" : "\(Int(bm.delta))"
+            let deltaColor = bm.delta >= 0 ? UIColor.systemGreen : UIColor.systemOrange
+            let coloredDeltaAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 11, weight: .bold), .foregroundColor: deltaColor]
+            deltaStr.draw(at: CGPoint(x: margin + 360, y: y), withAttributes: coloredDeltaAttrs)
+
+            let barY = y + 22
+            let barHeight: CGFloat = 6
+
+            let bgRect = CGRect(x: margin, y: barY, width: contentWidth, height: barHeight)
+            UIColor.systemGray5.setFill()
+            UIBezierPath(roundedRect: bgRect, cornerRadius: 3).fill()
+
+            let userWidth = contentWidth * CGFloat(bm.userScore / 100.0)
+            let userRect = CGRect(x: margin, y: barY, width: userWidth, height: barHeight)
+            tealColor.setFill()
+            UIBezierPath(roundedRect: userRect, cornerRadius: 3).fill()
+
+            let avgX = margin + contentWidth * CGFloat(bm.industryAverage / 100.0)
+            let markerRect = CGRect(x: avgX - 1, y: barY - 2, width: 2, height: barHeight + 4)
+            UIColor.gray.setFill()
+            UIBezierPath(roundedRect: markerRect, cornerRadius: 1).fill()
+
+            y += 48
+        }
+
+        let footerAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 10, weight: .regular), .foregroundColor: UIColor.lightGray]
+        "MVM Pulse by M5CAIRO".draw(at: CGPoint(x: margin, y: pageHeight - 50), withAttributes: footerAttrs)
+    }
+
+    private static func drawWhatsNextPage(context: UIGraphicsPDFRendererContext, result: AssessmentResult, profile: UserProfile, pageWidth: CGFloat, pageHeight: CGFloat, margin: CGFloat, contentWidth: CGFloat) {
+        context.beginPage()
+        let tealColor = UIColor(red: 9/255, green: 119/255, blue: 112/255, alpha: 1)
+        let darkColor = UIColor(red: 17/255, green: 17/255, blue: 17/255, alpha: 1)
+
+        let headerAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 28, weight: .bold), .foregroundColor: tealColor]
+        "What\u{2019}s Next?".draw(at: CGPoint(x: margin, y: margin), withAttributes: headerAttrs)
+
+        let introAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 14, weight: .regular), .foregroundColor: UIColor.darkGray]
+        let introText = "Your Pulse Score of \(Int(result.overallScore)) is a starting point, not a destination. To accelerate your transformation, consider working with an expert who can translate these insights into a tailored strategy for your specific situation."
+        let introRect = CGRect(x: margin, y: margin + 50, width: contentWidth, height: 80)
+        introText.draw(in: introRect, withAttributes: introAttrs)
+
+        var y: CGFloat = margin + 150
+
+        let sectionHeaderAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 16, weight: .bold), .foregroundColor: darkColor]
+        let bodyAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 12, weight: .regular), .foregroundColor: UIColor.darkGray]
+        let accentAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: tealColor]
+
+        "1-on-1 Strategy Consultation".draw(at: CGPoint(x: margin, y: y), withAttributes: sectionHeaderAttrs)
+        y += 25
+        let consultText = "Get personalized guidance from the M5CAIRO team. We\u{2019}ll review your full diagnostic, identify your highest-leverage opportunities, and build a custom action plan tailored to your \(profile.industry.rawValue.lowercased()) business."
+        let consultRect = CGRect(x: margin, y: y, width: contentWidth, height: 60)
+        consultText.draw(in: consultRect, withAttributes: bodyAttrs)
+        y += 75
+
+        "Custom AI Integration Planning".draw(at: CGPoint(x: margin, y: y), withAttributes: sectionHeaderAttrs)
+        y += 25
+        let aiText = "Your Technology & AI Readiness score reveals specific opportunities for automation and AI adoption. Our team specializes in practical AI integration strategies that deliver ROI within 90 days."
+        let aiRect = CGRect(x: margin, y: y, width: contentWidth, height: 60)
+        aiText.draw(in: aiRect, withAttributes: bodyAttrs)
+        y += 75
+
+        "Ongoing Advisory Support".draw(at: CGPoint(x: margin, y: y), withAttributes: sectionHeaderAttrs)
+        y += 25
+        let ongoingText = "Beyond the initial assessment, M5CAIRO offers ongoing advisory relationships to ensure sustained improvement. Track your progress with quarterly reassessments and expert-guided pivots."
+        let ongoingRect = CGRect(x: margin, y: y, width: contentWidth, height: 60)
+        ongoingText.draw(in: ongoingRect, withAttributes: bodyAttrs)
+        y += 90
+
+        let dividerRect = CGRect(x: margin, y: y, width: contentWidth, height: 1)
+        tealColor.withAlphaComponent(0.3).setFill()
+        UIBezierPath(rect: dividerRect).fill()
+        y += 20
+
+        "Ready to take action?".draw(at: CGPoint(x: margin, y: y), withAttributes: sectionHeaderAttrs)
+        y += 30
+
+        "Visit:".draw(at: CGPoint(x: margin, y: y), withAttributes: bodyAttrs)
+        "https://m5cairo.com".draw(at: CGPoint(x: margin + 35, y: y), withAttributes: accentAttrs)
+        y += 22
+
+        "Email:".draw(at: CGPoint(x: margin, y: y), withAttributes: bodyAttrs)
+        "contact@m5cairo.com".draw(at: CGPoint(x: margin + 40, y: y), withAttributes: accentAttrs)
+        y += 22
+
+        let closingText = "Mention your Pulse Score of \(Int(result.overallScore)) for a personalized consultation roadmap."
+        let closingAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 12, weight: .medium), .foregroundColor: tealColor]
+        closingText.draw(at: CGPoint(x: margin, y: y + 15), withAttributes: closingAttrs)
+
+        let footerAttrs: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 10, weight: .regular), .foregroundColor: UIColor.lightGray]
+        "MVM Pulse by M5CAIRO (M5 Capital Partners LLC)".draw(at: CGPoint(x: margin, y: pageHeight - 50), withAttributes: footerAttrs)
     }
 
     private static func drawDisclaimerPage(context: UIGraphicsPDFRendererContext, pageWidth: CGFloat, pageHeight: CGFloat, margin: CGFloat, contentWidth: CGFloat) {

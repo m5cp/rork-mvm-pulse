@@ -3,11 +3,14 @@ import SwiftUI
 struct RoadmapView: View {
     let storage: StorageService
     let store: StoreViewModel
+    var ai: AIViewModel = AIViewModel()
     @State private var showPaywall: Bool = false
     @State private var celebratingWeek: Int?
     @State private var showCelebration: Bool = false
     @State private var showTaskCompletion: Bool = false
     @State private var taskCompletionHaptic: Int = 0
+    @State private var weeklyRecapText: String?
+    @State private var isLoadingRecap: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -160,6 +163,21 @@ struct RoadmapView: View {
             VStack(spacing: 20) {
                 overallProgressCard
 
+                if let recap = weeklyRecapText {
+                    weeklyRecapCard(recap: recap)
+                } else if isLoadingRecap {
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text("Generating weekly recap...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity)
+                    .background(PulseTheme.primaryTeal.opacity(0.06))
+                    .clipShape(.rect(cornerRadius: 14))
+                }
+
                 if let currentWeek = storage.roadmap.currentWeek {
                     currentWeekHeader(week: currentWeek)
                 }
@@ -170,6 +188,60 @@ struct RoadmapView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
+        }
+        .onAppear { loadWeeklyRecap() }
+    }
+
+    private func weeklyRecapCard(recap: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(.subheadline)
+                    .foregroundStyle(PulseTheme.primaryTeal)
+                Text("Week \(storage.roadmap.currentWeek?.weekNumber ?? 1) Recap")
+                    .font(.subheadline.bold())
+                Spacer()
+                Text("AI")
+                    .font(.caption2.bold())
+                    .foregroundStyle(PulseTheme.primaryTeal)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(PulseTheme.primaryTeal.opacity(0.1))
+                    .clipShape(Capsule())
+            }
+
+            Text(recap)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .background(PulseTheme.primaryTeal.opacity(0.06))
+        .clipShape(.rect(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(PulseTheme.primaryTeal.opacity(0.12), lineWidth: 1)
+        )
+    }
+
+    private func loadWeeklyRecap() {
+        guard !isLoadingRecap, weeklyRecapText == nil, store.isPremium else { return }
+        guard let result = storage.latestResult, let week = storage.roadmap.currentWeek else { return }
+        let completedThisWeek = week.tasks.filter(\.isCompleted).count
+        let totalThisWeek = week.tasks.count
+        guard completedThisWeek > 0 else { return }
+        isLoadingRecap = true
+        Task {
+            let recap = await ai.groq.generateWeeklyRecap(
+                weekNumber: week.weekNumber,
+                completedTasks: completedThisWeek,
+                totalTasks: totalThisWeek,
+                result: result,
+                profile: storage.userProfile,
+                streakDays: storage.streakData.currentStreak
+            )
+            weeklyRecapText = recap
+            isLoadingRecap = false
         }
     }
 

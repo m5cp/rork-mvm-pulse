@@ -74,11 +74,30 @@ struct PaywallView: View {
                 .font(.title2.bold())
                 .multilineTextAlignment(.center)
 
-            Text("Get detailed analysis, a personalized roadmap, and tools to track your progress over time.")
+            Text("Industry benchmarking, AI strategy sessions, executive briefings, and a personalized 12-week roadmap.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+
+            HStack(spacing: 20) {
+                premiumHighlight(icon: "chart.bar.xaxis", label: "Benchmarks")
+                premiumHighlight(icon: "sparkles", label: "AI Coach")
+                premiumHighlight(icon: "doc.text.fill", label: "Reports")
+            }
+            .padding(.top, 4)
         }
+    }
+
+    private func premiumHighlight(icon: String, label: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(PulseTheme.primaryTeal)
+            Text(label)
+                .font(.caption2.bold())
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var comparisonTable: some View {
@@ -93,13 +112,15 @@ struct PaywallView: View {
             Divider().padding(.vertical, 4)
 
             comparisonRow("Detailed category analysis", free: false, premium: true)
+            comparisonRow("Industry benchmarking", free: false, premium: true)
             comparisonRow("12-week personalized roadmap", free: false, premium: true)
             comparisonRow("PDF diagnostic report", free: false, premium: true)
             comparisonRow("Score history & trends", free: false, premium: true)
             comparisonRow("All share card styles", free: false, premium: true)
             comparisonRow("Reassessment insights", free: false, premium: true)
             comparisonRow("Streak tracking & milestones", free: false, premium: true)
-            comparisonRow("Weekly insights", free: false, premium: true)
+            comparisonRow("Weekly check-in recaps", free: false, premium: true)
+            comparisonRow("Quarterly executive briefing", free: false, premium: true)
 
             Divider().padding(.vertical, 4)
 

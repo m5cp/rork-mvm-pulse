@@ -24,7 +24,7 @@ struct ContentView: View {
                 }
 
                 Tab("Roadmap", systemImage: "map.fill", value: .roadmap) {
-                    RoadmapView(storage: storage, store: store)
+                    RoadmapView(storage: storage, store: store, ai: ai)
                 }
 
                 Tab("Settings", systemImage: "gearshape.fill", value: .settings) {

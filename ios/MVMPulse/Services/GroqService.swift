@@ -247,7 +247,58 @@ final class GroqService {
         return await chat(prompt: prompt)
     }
 
-    private func chat(prompt: String) async -> String? {
+    func generateWeeklyRecap(weekNumber: Int, completedTasks: Int, totalTasks: Int, result: AssessmentResult, profile: UserProfile, streakDays: Int) async -> String? {
+        guard isAvailable else { return nil }
+
+        let weakest = result.weakestCategory?.category.rawValue ?? "unknown"
+        let weakestScore = Int(result.weakestCategory?.normalizedScore ?? 0)
+        let completionRate = totalTasks > 0 ? Int(Double(completedTasks) / Double(totalTasks) * 100) : 0
+        let projectedImprovement = min(15, max(2, completedTasks * 2))
+
+        let prompt = """
+        You are MVM Pulse, a premium AI business coach. Generate a concise weekly recap (3-4 sentences) for a user completing Week \(weekNumber) of their 12-week roadmap.
+
+        Profile: \(profile.role.rawValue) in \(profile.industry.rawValue)
+        Pulse Score: \(Int(result.overallScore))/100
+        Tasks completed this week: \(completedTasks)/\(totalTasks) (\(completionRate)%)
+        Weakest area: \(weakest) at \(weakestScore)%
+        Current streak: \(streakDays) days
+        Projected score improvement: ~\(projectedImprovement) points if pace continues
+
+        Include: what they accomplished, projected score improvement based on task completion, and one specific focus for next week. Be encouraging but data-driven. Second person.
+        """
+
+        return await chat(prompt: prompt)
+    }
+
+    func generateExecutiveBriefing(results: [AssessmentResult], profile: UserProfile, roadmapProgress: Double, completedTasks: Int, totalTasks: Int, streakDays: Int) async -> String? {
+        guard isAvailable else { return nil }
+
+        let trajectory = results.count >= 2
+            ? "Score trajectory: \(results.map { "\(Int($0.overallScore))" }.joined(separator: " → "))"
+            : "Single assessment: \(Int(results.last?.overallScore ?? 0))"
+
+        let categoryTrends = results.last?.categoryScores
+            .map { "\($0.category.rawValue): \(Int($0.normalizedScore))%" }
+            .joined(separator: ", ") ?? "N/A"
+
+        let prompt = """
+        You are MVM Pulse, a premium AI business diagnostics platform. Generate an executive briefing summary (5-7 sentences) suitable for a quarterly business review.
+
+        Profile: \(profile.role.rawValue) in \(profile.industry.rawValue), company size: \(profile.companySize.rawValue)
+        \(trajectory)
+        Current category scores: \(categoryTrends)
+        Roadmap progress: \(Int(roadmapProgress * 100))% (\(completedTasks)/\(totalTasks) tasks)
+        Engagement streak: \(streakDays) days
+        Total assessments: \(results.count)
+
+        Write in a professional, McKinsey-style tone. Include: overall trajectory analysis, key strengths, critical gaps requiring attention, projected outcomes if current pace continues, and one strategic recommendation. Use specific numbers throughout. This should read like an executive summary a consultant would present.
+        """
+
+        return await chat(prompt: prompt, maxTokens: 800)
+    }
+
+    private func chat(prompt: String, maxTokens: Int = 500) async -> String? {
         guard let url = URL(string: baseURL) else { return nil }
 
         var request = URLRequest(url: url)
@@ -262,7 +313,7 @@ final class GroqService {
                 GroqChatMessage(role: "user", content: prompt)
             ],
             temperature: 0.7,
-            max_tokens: 500
+            max_tokens: maxTokens
         )
 
         guard let httpBody = try? JSONEncoder().encode(body) else { return nil }
@@ -277,5 +328,9 @@ final class GroqService {
         } catch {
             return nil
         }
+    }
+
+    private func chat(prompt: String) async -> String? {
+        await chat(prompt: prompt, maxTokens: 500)
     }
 }

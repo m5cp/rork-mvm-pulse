@@ -6,6 +6,15 @@ struct BenchmarkResult: Sendable {
     let context: String
 }
 
+nonisolated struct CategoryBenchmarkResult: Sendable {
+    let category: AssessmentCategory
+    let userScore: Double
+    let industryAverage: Double
+    let percentile: Int
+    let delta: Double
+    let context: String
+}
+
 struct BenchmarkEngine {
     static func benchmark(score: Double, role: UserRole, industry: Industry) -> BenchmarkResult {
         let basePercentile = percentileFromScore(score)
@@ -38,6 +47,72 @@ struct BenchmarkEngine {
         default: catOffset = 0
         }
         return min(99, max(1, base + catOffset))
+    }
+
+    static func industryBenchmarks(result: AssessmentResult, industry: Industry, companySize: CompanySize) -> [CategoryBenchmarkResult] {
+        result.categoryScores.map { cs in
+            let avg = industryAverage(for: cs.category, industry: industry, companySize: companySize)
+            let pct = categoryBenchmark(category: cs.category, score: cs.normalizedScore)
+            let delta = cs.normalizedScore - avg
+            let context: String
+            if delta > 10 {
+                context = "Well above the \(industry.rawValue.lowercased()) average of \(Int(avg))"
+            } else if delta > 0 {
+                context = "Slightly above the \(industry.rawValue.lowercased()) average of \(Int(avg))"
+            } else if delta > -10 {
+                context = "Slightly below the \(industry.rawValue.lowercased()) average of \(Int(avg))"
+            } else {
+                context = "Below the \(industry.rawValue.lowercased()) average of \(Int(avg))"
+            }
+            return CategoryBenchmarkResult(
+                category: cs.category,
+                userScore: cs.normalizedScore,
+                industryAverage: avg,
+                percentile: pct,
+                delta: delta,
+                context: context
+            )
+        }
+    }
+
+    static func industryAverage(for category: AssessmentCategory, industry: Industry, companySize: CompanySize) -> Double {
+        let baseAverages: [AssessmentCategory: Double] = [
+            .financialHealth: 42,
+            .operationsProductivity: 38,
+            .leadershipStrategy: 44,
+            .teamCulture: 40,
+            .technologyAI: 35,
+            .customerMarket: 41,
+            .personalWellness: 36,
+            .growthLearning: 33
+        ]
+
+        var avg = baseAverages[category] ?? 38
+
+        switch industry {
+        case .technology: avg += (category == .technologyAI ? 12 : 3)
+        case .finance: avg += (category == .financialHealth ? 10 : 2)
+        case .healthcare: avg += (category == .personalWellness ? 5 : -1)
+        case .education: avg += (category == .growthLearning ? 8 : -2)
+        case .retail: avg += (category == .customerMarket ? 7 : -1)
+        case .manufacturing: avg += (category == .operationsProductivity ? 8 : 0)
+        case .government: avg += (category == .leadershipStrategy ? 3 : -3)
+        case .legal: avg += (category == .financialHealth ? 5 : 1)
+        case .professionalServices: avg += (category == .customerMarket ? 5 : 2)
+        case .realEstate: avg += (category == .financialHealth ? 4 : 0)
+        case .other: break
+        }
+
+        switch companySize {
+        case .solo: avg -= 3
+        case .tinyTeam: avg -= 1
+        case .smallTeam: break
+        case .mediumTeam: avg += 2
+        case .largeTeam: avg += 4
+        case .enterprise: avg += 6
+        }
+
+        return min(85, max(15, avg))
     }
 
     private static func percentileFromScore(_ score: Double) -> Int {

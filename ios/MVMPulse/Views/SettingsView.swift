@@ -409,6 +409,32 @@ struct SettingsView: View {
                 }
             }
 
+            if let siteURL = URL(string: "https://m5cairo.com") {
+                Link(destination: siteURL) {
+                    HStack {
+                        Label("Visit m5cairo.com", systemImage: "globe")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+
+            if let consultURL = URL(string: "https://m5cairo.com") {
+                Link(destination: consultURL) {
+                    HStack {
+                        Label("Book a Consultation", systemImage: "person.2.fill")
+                            .foregroundStyle(PulseTheme.primaryTeal)
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+
             HStack {
                 Text("Version")
                 Spacer()

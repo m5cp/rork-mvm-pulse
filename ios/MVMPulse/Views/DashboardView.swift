@@ -17,6 +17,7 @@ struct DashboardView: View {
     @State private var showCheckIn: Bool = false
     @State private var showGoalSetting: Bool = false
     @State private var showAssessmentHistory: Bool = false
+    @State private var showExecutiveBriefing: Bool = false
     @State private var selectedCategory: AssessmentCategory?
     @State private var taskCompletionHaptic: Int = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -64,6 +65,11 @@ struct DashboardView: View {
                 .sheet(isPresented: $showAssessmentHistory) {
                     NavigationStack {
                         AssessmentHistoryView(storage: storage, store: store, ai: ai)
+                    }
+                }
+                .sheet(isPresented: $showExecutiveBriefing) {
+                    NavigationStack {
+                        ExecutiveBriefingView(storage: storage, ai: ai)
                     }
                 }
                 .sheet(item: $selectedCategory) { category in
@@ -221,17 +227,23 @@ struct DashboardView: View {
                 if store.isPremium, let result = storage.latestResult {
                     insightsSection(result: result)
                         .staggerIn(appeared: cardsAppeared, index: 12, reduceMotion: reduceMotion)
+
+                    executiveBriefingCard
+                        .staggerIn(appeared: cardsAppeared, index: 13, reduceMotion: reduceMotion)
                 }
 
                 if !store.isPremium {
                     premiumPromptCard
-                        .staggerIn(appeared: cardsAppeared, index: 12, reduceMotion: reduceMotion)
+                        .staggerIn(appeared: cardsAppeared, index: 13, reduceMotion: reduceMotion)
                 }
 
                 if !storage.dailyCheckIns.isEmpty {
                     moodTrendCard
-                        .staggerIn(appeared: cardsAppeared, index: 13, reduceMotion: reduceMotion)
+                        .staggerIn(appeared: cardsAppeared, index: 14, reduceMotion: reduceMotion)
                 }
+
+                consultationCard
+                    .staggerIn(appeared: cardsAppeared, index: 15, reduceMotion: reduceMotion)
 
                 reassessmentPrompt
             }
@@ -256,6 +268,13 @@ struct DashboardView: View {
                         showAssessmentHistory = true
                     } label: {
                         Label("Assessment History", systemImage: "clock.arrow.circlepath")
+                    }
+                    if store.isPremium {
+                        Button {
+                            showExecutiveBriefing = true
+                        } label: {
+                            Label("Executive Briefing", systemImage: "chart.line.uptrend.xyaxis")
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -900,6 +919,90 @@ struct DashboardView: View {
                 PaywallView(store: store)
             }
         }
+    }
+
+    private var executiveBriefingCard: some View {
+        Button {
+            showExecutiveBriefing = true
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(PulseTheme.primaryTeal.opacity(0.1))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.body)
+                        .foregroundStyle(PulseTheme.primaryTeal)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Executive Briefing")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text("McKinsey-style quarterly trajectory report")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(.rect(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var consultationCard: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "person.2.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(PulseTheme.primaryTeal)
+                Text("Need Expert Guidance?")
+                    .font(.subheadline.bold())
+                Spacer()
+            }
+
+            Text("The M5CAIRO team offers 1-on-1 strategy consultations to help you translate your Pulse insights into action.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 10) {
+                if let url = URL(string: "https://m5cairo.com") {
+                    Link(destination: url) {
+                        Text("m5cairo.com")
+                            .font(.caption.bold())
+                            .foregroundStyle(PulseTheme.primaryTeal)
+                    }
+                }
+
+                Text("\u{00B7}")
+                    .foregroundStyle(.quaternary)
+
+                if let mailURL = URL(string: "mailto:contact@m5cairo.com") {
+                    Link(destination: mailURL) {
+                        Text("contact@m5cairo.com")
+                            .font(.caption.bold())
+                            .foregroundStyle(PulseTheme.primaryTeal)
+                    }
+                }
+
+                Spacer()
+            }
+        }
+        .padding(16)
+        .background(PulseTheme.primaryTeal.opacity(0.04))
+        .clipShape(.rect(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(PulseTheme.primaryTeal.opacity(0.1), lineWidth: 1)
+        )
     }
 
     private var reassessmentPrompt: some View {

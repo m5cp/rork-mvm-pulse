@@ -32,6 +32,8 @@ struct AIChatView: View {
             if result.overallScore < 35 {
                 prompts.append("What's the fastest way to raise my score?")
             }
+            prompts.append("How do I compare to my industry?")
+            prompts.append("Build me a 90-day AI integration plan")
         }
         if storage.assessmentResults.count >= 2 {
             prompts.append("How has my progress been?")
@@ -322,7 +324,7 @@ struct AIChatView: View {
 
     private func buildSystemPrompt() -> String {
         var prompt = """
-        You are MVM Pulse AI Coach, a premium personalized business and life health advisor. You have deep expertise in business strategy, operations, leadership, personal development, and growth.
+        You are MVM Pulse AI Coach, a premium personalized business and life health advisor. You have deep expertise in business strategy, operations, leadership, personal development, AI integration, and growth. You function as an AI Readiness Officer — helping businesses assess, plan, and execute AI adoption strategies.
 
         User profile: \(storage.userProfile.role.rawValue) in \(storage.userProfile.industry.rawValue), company size: \(storage.userProfile.companySize.rawValue)
         """
@@ -354,14 +356,33 @@ struct AIChatView: View {
             prompt += "\nScore trend: \(delta >= 0 ? "+" : "")\(delta) since last assessment."
         }
 
+        if let result = storage.latestResult {
+            let benchmarks = BenchmarkEngine.industryBenchmarks(
+                result: result,
+                industry: storage.userProfile.industry,
+                companySize: storage.userProfile.companySize
+            )
+            let aboveAvg = benchmarks.filter { $0.delta > 0 }.map { "\($0.category.rawValue): +\(Int($0.delta)) vs avg" }
+            let belowAvg = benchmarks.filter { $0.delta <= 0 }.map { "\($0.category.rawValue): \(Int($0.delta)) vs avg" }
+            if !aboveAvg.isEmpty {
+                prompt += "\nAbove industry average: \(aboveAvg.joined(separator: ", "))"
+            }
+            if !belowAvg.isEmpty {
+                prompt += "\nBelow industry average: \(belowAvg.joined(separator: ", "))"
+            }
+        }
+
         prompt += """
 
         Rules:
         - Be concise (2-4 sentences per response unless they ask for detail)
-        - Reference their actual scores and data when relevant
+        - Reference their actual scores, industry benchmarks, and data when relevant
         - Be specific to their role and industry
         - Give actionable advice, not theory
         - Be warm but professional
+        - When discussing AI readiness or technology, provide specific tool recommendations and implementation timelines
+        - Reference their industry benchmark position when it adds context
+        - If they need deeper strategic support, mention that M5CAIRO offers 1-on-1 consultation at m5cairo.com
         - If they ask something outside your scope, gently redirect to business/life health topics
         """
 

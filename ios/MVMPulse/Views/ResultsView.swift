@@ -7,6 +7,7 @@ struct ResultsView: View {
     let ai: AIViewModel
     @State private var showShareComposer: Bool = false
     @State private var showPDFPreview: Bool = false
+    @State private var showBenchmarks: Bool = false
     @State private var expandedCategory: AssessmentCategory?
     @State private var appeared: Bool = false
     @State private var heroRevealed: Bool = false
@@ -25,6 +26,12 @@ struct ResultsView: View {
                 benchmarkCard
                     .opacity(highlightRevealed ? 1 : 0)
                     .offset(y: highlightRevealed ? 0 : 20)
+
+                if store.isPremium {
+                    industryBenchmarkTeaser
+                        .opacity(highlightRevealed ? 1 : 0)
+                        .offset(y: highlightRevealed ? 0 : 20)
+                }
 
                 narrativeHighlight
                     .opacity(highlightRevealed ? 1 : 0)
@@ -58,6 +65,11 @@ struct ResultsView: View {
         .sheet(isPresented: $showPDFPreview) {
             NavigationStack {
                 PDFPreviewView(result: result, storage: storage)
+            }
+        }
+        .sheet(isPresented: $showBenchmarks) {
+            NavigationStack {
+                IndustryBenchmarkView(result: result, storage: storage)
             }
         }
         .onAppear {
@@ -312,6 +324,54 @@ struct ResultsView: View {
         .onAppear {
             ai.loadAnswerAnalysis(result: result, profile: storage.userProfile, isPremium: store.isPremium)
         }
+    }
+
+    private var industryBenchmarkTeaser: some View {
+        let benchmarks = BenchmarkEngine.industryBenchmarks(
+            result: result,
+            industry: storage.userProfile.industry,
+            companySize: storage.userProfile.companySize
+        )
+        let aboveAvg = benchmarks.filter { $0.delta > 0 }.count
+        let belowAvg = benchmarks.filter { $0.delta < 0 }.count
+
+        return Button {
+            showBenchmarks = true
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(PulseTheme.primaryTeal.opacity(0.1))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.body)
+                        .foregroundStyle(PulseTheme.primaryTeal)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Industry Benchmark")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text("\(aboveAvg) above avg \u{00B7} \(belowAvg) below avg vs. \(storage.userProfile.industry.rawValue.lowercased())")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(PulseTheme.primaryTeal.opacity(0.06))
+            .clipShape(.rect(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(PulseTheme.primaryTeal.opacity(0.12), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var actionButtons: some View {
