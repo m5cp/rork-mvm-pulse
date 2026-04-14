@@ -2,7 +2,7 @@ import Foundation
 
 @Observable
 final class AIViewModel {
-    let groq = GroqService()
+    let router = AIServiceRouter()
     let usage = AIUsageManager()
 
     var aiSummary: String?
@@ -19,7 +19,11 @@ final class AIViewModel {
     var isLoadingNarrative: Bool = false
     var usageLimitHit: Bool = false
 
-    var isAvailable: Bool { groq.isAvailable }
+    var isAvailable: Bool { router.isAvailable }
+
+    var activeProviderName: String { router.activeProvider.rawValue }
+
+    var providerStatus: String { router.providerStatusDescription }
 
     func currentTier(isPremium: Bool) -> AIUsageTier {
         isPremium ? .premium : .free
@@ -34,7 +38,7 @@ final class AIViewModel {
         }
         isLoadingSummary = true
         Task {
-            let summary = await groq.generateExecutiveSummary(result: result, profile: profile)
+            let summary = await router.generateExecutiveSummary(result: result, profile: profile)
             if summary != nil { usage.recordUsage(.executiveSummary) }
             aiSummary = summary
             isLoadingSummary = false
@@ -50,7 +54,7 @@ final class AIViewModel {
         }
         isLoadingTip = true
         Task {
-            let tip = await groq.generateDailyCoachingTip(result: result, profile: profile, streakDays: streakDays)
+            let tip = await router.generateDailyCoachingTip(result: result, profile: profile, streakDays: streakDays)
             if tip != nil { usage.recordUsage(.dailyTip) }
             aiDailyTip = tip
             isLoadingTip = false
@@ -66,7 +70,7 @@ final class AIViewModel {
         }
         isLoadingInsights = true
         Task {
-            let insights = await groq.generateWeeklyInsights(result: result, profile: profile, completedTasks: completedTasks, totalTasks: totalTasks)
+            let insights = await router.generateWeeklyInsights(result: result, profile: profile, completedTasks: completedTasks, totalTasks: totalTasks)
             if insights != nil { usage.recordUsage(.weeklyInsights) }
             aiWeeklyInsights = insights
             isLoadingInsights = false
@@ -82,7 +86,7 @@ final class AIViewModel {
         }
         isLoadingAnalysis = true
         Task {
-            let analysis = await groq.generateAnswerAnalysis(result: result, profile: profile)
+            let analysis = await router.generateAnswerAnalysis(result: result, profile: profile)
             if analysis != nil { usage.recordUsage(.answerAnalysis) }
             aiAnswerAnalysis = analysis
             isLoadingAnalysis = false
@@ -100,7 +104,7 @@ final class AIViewModel {
         isLoadingReflection = true
         Task {
             let moodHistory = recentMoods.suffix(5).map { $0.mood.label }.joined(separator: " \u{2192} ")
-            let reflection = await groq.generateCheckInReflection(
+            let reflection = await router.generateCheckInReflection(
                 mood: mood.label,
                 moodHistory: moodHistory.isEmpty ? "First check-in" : moodHistory,
                 result: result,
@@ -121,7 +125,7 @@ final class AIViewModel {
         }
         isLoadingNarrative = true
         Task {
-            let narrative = await groq.generateProgressNarrative(
+            let narrative = await router.generateProgressNarrative(
                 oldResult: oldResult,
                 newResult: newResult,
                 profile: profile,

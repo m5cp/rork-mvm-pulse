@@ -10,7 +10,7 @@ struct AIChatView: View {
     @State private var showPaywall: Bool = false
     @FocusState private var isInputFocused: Bool
 
-    private let groq = GroqService()
+    private let router = AIServiceRouter()
 
     private var chatRemaining: Int {
         ai.usage.remaining(.chatMessage, tier: .premium)
@@ -46,7 +46,7 @@ struct AIChatView: View {
             Group {
                 if !store.isPremium {
                     lockedState
-                } else if !groq.isAvailable {
+                } else if !ai.isAvailable {
                     unavailableState
                 } else {
                     chatContent
@@ -188,6 +188,13 @@ struct AIChatView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             Spacer()
+            HStack(spacing: 3) {
+                Image(systemName: ai.router.appleAI.isAvailable ? "apple.logo" : "cloud")
+                    .font(.system(size: 8))
+                Text(ai.activeProviderName)
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 16)
         .padding(.top, 6)
@@ -307,7 +314,7 @@ struct AIChatView: View {
             let systemPrompt = buildSystemPrompt()
             let groqMessages = messages.map { GroqChatMessage(role: $0.role == .user ? "user" : "assistant", content: $0.content) }
 
-            let response = await groq.chatConversation(messages: groqMessages, systemPrompt: systemPrompt)
+            let response = await router.chatConversation(messages: groqMessages, systemPrompt: systemPrompt)
 
             if response != nil {
                 ai.usage.recordUsage(.chatMessage)

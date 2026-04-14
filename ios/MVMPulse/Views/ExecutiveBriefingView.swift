@@ -392,7 +392,7 @@ struct ExecutiveBriefingView: View {
         guard !isLoading, briefingText == nil else { return }
         isLoading = true
         Task {
-            let text = await ai.groq.generateExecutiveBriefing(
+            let text = await ai.router.generateExecutiveBriefing(
                 results: storage.assessmentResults,
                 profile: storage.userProfile,
                 roadmapProgress: storage.roadmap.overallProgress,

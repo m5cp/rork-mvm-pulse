@@ -398,7 +398,7 @@ struct CategoryDeepDiveView: View {
         isAskingAI = true
         askAIAnswer = nil
         Task {
-            let answer = await ai.groq.generateCategoryQA(
+            let answer = await ai.router.generateCategoryQA(
                 category: category,
                 score: currentScore,
                 question: question,

@@ -232,7 +232,7 @@ struct RoadmapView: View {
         guard completedThisWeek > 0 else { return }
         isLoadingRecap = true
         Task {
-            let recap = await ai.groq.generateWeeklyRecap(
+            let recap = await ai.router.generateWeeklyRecap(
                 weekNumber: week.weekNumber,
                 completedTasks: completedThisWeek,
                 totalTasks: totalThisWeek,
