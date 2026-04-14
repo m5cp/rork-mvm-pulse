@@ -23,11 +23,11 @@ nonisolated enum CheckInMood: Int, Codable, CaseIterable, Sendable {
 
     var emoji: String {
         switch self {
-        case .struggling: "😣"
-        case .tough: "😕"
-        case .okay: "😐"
-        case .good: "😊"
-        case .great: "🔥"
+        case .struggling: "\u{1F623}"
+        case .tough: "\u{1F615}"
+        case .okay: "\u{1F610}"
+        case .good: "\u{1F60A}"
+        case .great: "\u{1F525}"
         }
     }
 

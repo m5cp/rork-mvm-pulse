@@ -33,8 +33,8 @@ struct DailyCheckInView: View {
                         }
                     } label: {
                         VStack(spacing: 6) {
-                            Text(mood.emoji)
-                                .font(.system(size: 36))
+                            Text(verbatim: mood.emoji)
+                                .font(.largeTitle)
                                 .scaleEffect(selectedMood == mood ? 1.2 : 1.0)
 
                             Text(mood.label)

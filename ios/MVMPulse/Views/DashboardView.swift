@@ -420,7 +420,7 @@ struct DashboardView: View {
             HStack(spacing: 8) {
                 ForEach(recentCheckIns) { checkIn in
                     VStack(spacing: 4) {
-                        Text(checkIn.mood.emoji)
+                        Text(verbatim: checkIn.mood.emoji)
                             .font(.title3)
                         Text(checkIn.date, format: .dateTime.weekday(.abbreviated))
                             .font(.caption2)
