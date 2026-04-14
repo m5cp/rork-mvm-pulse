@@ -17,8 +17,7 @@ struct DashboardView: View {
     @State private var showCheckIn: Bool = false
     @State private var showGoalSetting: Bool = false
     @State private var showAssessmentHistory: Bool = false
-    @State private var showExecutiveBriefing: Bool = false
-    @State private var showTeamAssessment: Bool = false
+
     @State private var selectedCategory: AssessmentCategory?
     @State private var taskCompletionHaptic: Int = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -68,16 +67,7 @@ struct DashboardView: View {
                         AssessmentHistoryView(storage: storage, store: store, ai: ai)
                     }
                 }
-                .sheet(isPresented: $showExecutiveBriefing) {
-                    NavigationStack {
-                        ExecutiveBriefingView(storage: storage, ai: ai)
-                    }
-                }
-                .sheet(isPresented: $showTeamAssessment) {
-                    NavigationStack {
-                        TeamAssessmentView(storage: storage, store: store)
-                    }
-                }
+
                 .sheet(item: $selectedCategory) { category in
                     NavigationStack {
                         CategoryDeepDiveView(category: category, storage: storage, store: store, ai: ai)
@@ -234,11 +224,7 @@ struct DashboardView: View {
                     insightsSection(result: result)
                         .staggerIn(appeared: cardsAppeared, index: 12, reduceMotion: reduceMotion)
 
-                    executiveBriefingCard
-                        .staggerIn(appeared: cardsAppeared, index: 13, reduceMotion: reduceMotion)
 
-                    teamAssessmentCard
-                        .staggerIn(appeared: cardsAppeared, index: 14, reduceMotion: reduceMotion)
                 }
 
                 if !store.isPremium {
@@ -278,18 +264,7 @@ struct DashboardView: View {
                     } label: {
                         Label("Assessment History", systemImage: "clock.arrow.circlepath")
                     }
-                    if store.isPremium {
-                        Button {
-                            showExecutiveBriefing = true
-                        } label: {
-                            Label("Executive Briefing", systemImage: "chart.line.uptrend.xyaxis")
-                        }
-                        Button {
-                            showTeamAssessment = true
-                        } label: {
-                            Label("Team Assessment", systemImage: "person.3.fill")
-                        }
-                    }
+
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .font(.body)
@@ -912,7 +887,7 @@ struct DashboardView: View {
                     Text("Upgrade to Business")
                         .font(.subheadline.bold())
                         .foregroundStyle(.primary)
-                    Text("Team assessments, AI coach, benchmarks & executive briefings")
+                    Text("Industry benchmarks, AI coach, roadmap & PDF reports")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -933,84 +908,6 @@ struct DashboardView: View {
                 PaywallView(store: store)
             }
         }
-    }
-
-    private var executiveBriefingCard: some View {
-        Button {
-            showExecutiveBriefing = true
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(PulseTheme.primaryTeal.opacity(0.1))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.body)
-                        .foregroundStyle(PulseTheme.primaryTeal)
-                }
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Executive Briefing")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                    Text("McKinsey-style quarterly trajectory report")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(16)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(.rect(cornerRadius: 16))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var teamAssessmentCard: some View {
-        Button {
-            showTeamAssessment = true
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(Color.orange.opacity(0.1))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "person.3.fill")
-                        .font(.body)
-                        .foregroundStyle(.orange)
-                }
-
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Team Assessment")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                    if let data = storage.teamData, !data.members.isEmpty {
-                        Text("\(data.completedMembers.count)/\(data.members.count) completed \u{00B7} View alignment gaps")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("Invite up to 5 team members to compare scores")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(16)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(.rect(cornerRadius: 16))
-        }
-        .buttonStyle(.plain)
     }
 
     private var consultationCard: some View {

@@ -81,15 +81,15 @@ struct PaywallView: View {
                 .font(.title2.bold())
                 .multilineTextAlignment(.center)
 
-            Text("Enterprise-grade AI diagnostics, team assessments, industry benchmarking, and executive briefings \u{2014} everything you need to lead your AI transformation.")
+            Text("Enterprise-grade AI diagnostics, industry benchmarking, personalized roadmaps, and unlimited AI coaching \u{2014} everything you need to lead your AI transformation.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             HStack(spacing: 16) {
                 premiumHighlight(icon: "chart.bar.xaxis", label: "Benchmarks")
-                premiumHighlight(icon: "person.3.fill", label: "Team")
-                premiumHighlight(icon: "doc.richtext", label: "Briefings")
+                premiumHighlight(icon: "map.fill", label: "Roadmap")
+                premiumHighlight(icon: "doc.text.fill", label: "PDF Report")
                 premiumHighlight(icon: "sparkles", label: "AI Coach")
             }
             .padding(.top, 4)
@@ -103,7 +103,7 @@ struct PaywallView: View {
                 .foregroundStyle(.white)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("7-Day Full Access Free Trial")
+                Text("3-Day Full Access Free Trial")
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
                 Text("Experience every feature before you commit")
@@ -169,9 +169,7 @@ struct PaywallView: View {
             comparisonRow("All share card styles", free: false, business: true)
             comparisonRow("Reassessment insights", free: false, business: true)
             comparisonRow("Streak tracking & milestones", free: false, business: true)
-            comparisonRow("Weekly check-in recaps", free: false, business: true)
-            comparisonRow("Quarterly executive briefing", free: false, business: true)
-            comparisonRow("Team assessments (up to 5)", free: false, business: true)
+            comparisonRow("AI-powered insights", free: false, business: true)
 
             Divider().padding(.vertical, 6)
 
@@ -344,7 +342,7 @@ struct PaywallView: View {
                                     .foregroundStyle(.primary)
 
                                 if isAnnual {
-                                    Text("SAVE 33%")
+                                    Text("BEST VALUE")
                                         .font(.system(size: 9, weight: .heavy))
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 6)
@@ -425,7 +423,7 @@ struct PaywallView: View {
     private var purchaseButtonTitle: String {
         guard let pkg = selectedPackage else { return "Subscribe Now" }
         if pkg.storeProduct.introductoryDiscount != nil {
-            return "Start 7-Day Free Trial"
+            return "Start 3-Day Free Trial"
         }
         return "Subscribe Now"
     }

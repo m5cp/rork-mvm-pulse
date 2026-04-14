@@ -287,7 +287,7 @@ struct PDFReportService {
 
         "AI-Powered Diagnostic Suite".draw(at: CGPoint(x: margin, y: y), withAttributes: sectionHeaderAttrs)
         y += 22
-        let suiteText = "Your MVM Pulse Business subscription includes industry benchmarking, a personalized 12-week roadmap, AI coaching sessions, weekly check-in recaps, team assessments, and quarterly executive briefings \u{2014} all designed to close your readiness gap systematically."
+        let suiteText = "Your MVM Pulse Business subscription includes industry benchmarking, a personalized 12-week roadmap, AI coaching sessions, detailed category analysis, PDF diagnostic reports, and score history tracking \u{2014} all designed to close your readiness gap systematically."
         let suiteRect = CGRect(x: margin, y: y, width: contentWidth, height: 55)
         suiteText.draw(in: suiteRect, withAttributes: bodyAttrs)
         y += 65
@@ -321,7 +321,7 @@ struct PDFReportService {
 
         "Board-Ready Reports & Custom KPIs".draw(at: CGPoint(x: margin, y: y), withAttributes: sectionHeaderAttrs)
         y += 20
-        let boardText = "Investor-grade presentation decks, custom KPI tracking correlated with your Pulse Score, and quarterly executive briefings styled for stakeholder meetings."
+        let boardText = "Investor-grade presentation decks and custom KPI tracking correlated with your Pulse Score, tailored for stakeholder meetings."
         let boardRect = CGRect(x: margin, y: y, width: contentWidth, height: 35)
         boardText.draw(in: boardRect, withAttributes: bodyAttrs)
         y += 40
